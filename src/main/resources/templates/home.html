@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome!</h2>
+        <p>You are logged in with User ID: <span th:text="${id}"></span></p>
+        <a href="/users/create">Create Another User</a>
+    </div>
+</body>
+</html>
