@@ -86,8 +86,6 @@ public class WebController {
     @PostMapping("/start-game")
     public String startGame(HttpSession session) {
         User user = (User) session.getAttribute("user");
-        // Print user details for debugging
-        System.out.println("User ID: " + user.getId());
         if (user != null) {
             // Setup game logic here
             return "redirect:/game";
