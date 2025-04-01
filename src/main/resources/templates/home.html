@@ -12,7 +12,7 @@
     <div class="container">
         <h2>Welcome!</h2>
         <p>You are logged in with User ID: <span th:text="${user.id}"></span></p>
-        <form th:action="@{/users/start-game}" method="post">
+        <form th:action="@{/start-game}" method="post">
             <button type="submit">Start Game</button>
         </form>
     </div>
