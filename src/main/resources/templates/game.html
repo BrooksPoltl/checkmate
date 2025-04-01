@@ -6,35 +6,42 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
         }
         .container {
             text-align: center;
+            padding: 20px;
         }
         .chessboard {
-            width: 800px;
-            height: 800px;
+            width: 60vmin;
+            height: 60vmin;
+            max-width: 600px;
+            max-height: 600px;
             border: 2px solid #333;
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             grid-template-rows: repeat(8, 1fr);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .square {
-            width: 100px;
-            height: 100px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 48px;
+            font-size: calc(0.6 * (60vmin / 8));
+            transition: background-color 0.3s;
+        }
+        .square:hover {
+            background-color: rgba(255, 255, 0, 0.2);
         }
         .light {
-            background-color: #ffffff;
+            background-color: #f0d9b5;
         }
+        
         .dark {
             background-color: #b58863;
         }
@@ -43,12 +50,37 @@
         }
         a {
             display: inline-block;
-            margin-top: 10px;
+            margin-top: 15px;
             text-decoration: none;
             color: #4CAF50;
+            font-size: 1.2em;
         }
         a:hover {
             text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .chessboard {
+                width: 80vmin;
+                height: 80vmin;
+            }
+            .square {
+                font-size: calc(0.6 * (80vmin / 8));
+            }
+            .info h2 {
+                font-size: 1.5em;
+            }
+            .info p {
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 480px) {
+            .chessboard {
+                width: 90vmin;
+                height: 90vmin;
+            }
+            .square {
+                font-size: calc(0.6 * (90vmin / 8));
+            }
         }
     </style>
 </head>

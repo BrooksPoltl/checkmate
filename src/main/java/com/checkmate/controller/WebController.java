@@ -44,6 +44,10 @@ public class WebController {
         session.setAttribute("user", createdUser);
         return "redirect:/home";
     }
+    @GetMapping("/users/create")
+    public String getCreateForm(User user, HttpSession session) {
+        return "create-user";
+    }
     /**
      * Method to handle the user login.
      *
