@@ -41,8 +41,8 @@ public class WebController {
     @PostMapping("/users/create")
     public String showCreateForm(User user, HttpSession session) {
         User createdUser = userService.saveUser(user);
-        session.setAttribute("user", createdUser); // Store the created user in the session
-        return "redirect:/home"; // Redirect after submission
+        session.setAttribute("user", createdUser);
+        return "redirect:/home";
     }
     /**
      * Method to handle the user login.
@@ -53,18 +53,40 @@ public class WebController {
      */
     @GetMapping("/home")
     public String showHome(Model model, HttpSession session) {
-        return "home"; // Name of the Thymeleaf template
+        User user = (User) session.getAttribute("user");
+        if (user != null) {
+            model.addAttribute("user", user);
+        } else {
+            return "redirect:/users/create";
+        }
+        return "home";
     }
 
     /**
      * Method to display the user login form.
      *
-     * @param model the model to add attributes to.
+     * @param session the HTTP session to store user data.
      * @return the name of the Thymeleaf template.
      */
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/users/create";
+    }
+    /**
+     * Method to display the game page.
+     * @param session the HTTP session to store game data.
+     * @return the name of the Thymeleaf template.
+     */
+    @PostMapping("/start-game")
+    public String startGame(HttpSession session) {
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId != null) {
+            //Game game = userService.startGame(userId);
+            //session.setAttribute("gameId", game.getId()); // Store game ID
+            return "redirect:/game";
+        } else {
+            return "redirect:/users/create";
+        }
     }
 }
