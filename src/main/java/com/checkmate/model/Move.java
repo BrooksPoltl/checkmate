@@ -19,22 +19,33 @@ public class Move {
     private Game game;
 
     @Column(name = "move_number")
-    private int moveNumber; // e.g., 1, 2, 3 (incremented per move)
+    private int moveNumber;
+
+    @Column(name = "from_row")
+    private int fromRow;
+
+    @Column(name = "from_col")
+    private int fromCol;
+
+    @Column(name = "to_row")
+    private int toRow;
+
+    @Column(name = "to_col")
+    private int toCol;
 
     @Column(name = "player")
     private String player; // "white" or "black"
 
-    @Column(name = "notation")
-    private String notation; // e.g., "e2e4", "Nf3"
-
-    // Constructors
     public Move() {}
 
-    public Move(Game game, int moveNumber, String player, String notation) {
+    public Move(Game game, int moveNumber, int fromRow, int fromCol, int toRow, int toCol, String player) {
         this.game = game;
         this.moveNumber = moveNumber;
+        this.fromRow = fromRow;
+        this.fromCol = fromCol;
+        this.toRow = toRow;
+        this.toCol = toCol;
         this.player = player;
-        this.notation = notation;
     }
 
     // Getters and setters
@@ -44,8 +55,14 @@ public class Move {
     public void setGame(Game game) { this.game = game; }
     public int getMoveNumber() { return moveNumber; }
     public void setMoveNumber(int moveNumber) { this.moveNumber = moveNumber; }
+    public int getFromRow() { return fromRow; }
+    public void setFromRow(int fromRow) { this.fromRow = fromRow; }
+    public int getFromCol() { return fromCol; }
+    public void setFromCol(int fromCol) { this.fromCol = fromCol; }
+    public int getToRow() { return toRow; }
+    public void setToRow(int toRow) { this.toRow = toRow; }
+    public int getToCol() { return toCol; }
+    public void setToCol(int toCol) { this.toCol = toCol; }
     public String getPlayer() { return player; }
     public void setPlayer(String player) { this.player = player; }
-    public String getNotation() { return notation; }
-    public void setNotation(String notation) { this.notation = notation; }
 }
