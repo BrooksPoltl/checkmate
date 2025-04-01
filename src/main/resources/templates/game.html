@@ -45,6 +45,13 @@
         .dark {
             background-color: #b58863;
         }
+        .white-piece {
+            color: #fff;
+            text-shadow: 0 0 2px #000;
+        }
+        .black-piece {
+            color: #000;
+        }
         .info {
             margin-bottom: 20px;
         }
@@ -90,12 +97,11 @@
             <h2>Chess Game</h2>
         </div>
         <div class="chessboard">
-            <!-- Loop through 8 rows -->
             <th:block th:each="row : ${#numbers.sequence(0, 7)}">
-                <!-- Loop through 8 columns -->
                 <th:block th:each="col : ${#numbers.sequence(0, 7)}">
-                    <div th:classappend="${(row + col) % 2 == 0} ? 'square light' : 'square dark'"
-                         th:text="${pieces[row][col]}">
+                    <div class="square"
+                         th:classappend="${(row + col) % 2 == 0 ? 'light' : 'dark'} + ' ' + ${board.squares[row][col] != null ? (board.squares[row][col].color == 'white' ? 'white-piece' : 'black-piece') : ''}"
+                         th:text="${board.squares[row][col]?.symbol}">
                     </div>
                 </th:block>
             </th:block>

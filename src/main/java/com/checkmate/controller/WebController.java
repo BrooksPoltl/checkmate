@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.servlet.http.HttpSession;
+import com.checkmate.model.Board;
 
 ;
 /**
@@ -104,17 +105,8 @@ public class WebController {
     @GetMapping("/game")
     public String showGame(Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
-        String[][] pieces = {
-            {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"}, // Row 0 (Black back rank)
-            {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"}, // Row 1 (Black pawns)
-            {"", "", "", "", "", "", "", ""},           // Row 2
-            {"", "", "", "", "", "", "", ""},           // Row 3
-            {"", "", "", "", "", "", "", ""},           // Row 4
-            {"", "", "", "", "", "", "", ""},           // Row 5
-            {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"}, // Row 6 (White pawns)
-            {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"}  // Row 7 (White back rank)
-        };
-        model.addAttribute("pieces", pieces);
+        Board board = new Board();
+        model.addAttribute("board", board);
         if (user != null) {
             // TODO: Implement game construction logic
             return "game";
