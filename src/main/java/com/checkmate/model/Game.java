@@ -21,10 +21,10 @@ public class Game {
     private String status; // e.g., "active", "completed", "resigned"
 
     @Column(name = "current_player")
-    private String currentPlayer; // "white" or "black"
+    private String currentPlayer;
 
     @OneToMany(mappedBy = "game")
-    private List<Move> moves; // List of moves in this game
+    private List<Move> moves;
 
     // Constructors
     public Game() {}
@@ -32,7 +32,7 @@ public class Game {
     public Game(int userId) {
         this.userId = userId;
         this.status = "active";
-        this.currentPlayer = "white"; // White starts in chess
+        this.currentPlayer = "white";
     }
 
     // Getters and setters
