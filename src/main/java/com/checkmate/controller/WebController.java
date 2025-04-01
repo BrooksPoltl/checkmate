@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.servlet.http.HttpSession;
 import com.checkmate.model.Board;
@@ -88,7 +89,7 @@ public class WebController {
         User user = (User) session.getAttribute("user");
         if (user != null) {
             // Setup game logic here
-            return "redirect:/game";
+            return "redirect:/game?userId=" + user.getId();
         } else {
             return "redirect:/users/create";
         }
@@ -96,15 +97,22 @@ public class WebController {
     /**
      * Method to display the game page.
      *
+     * @param userId the ID of the user.
      * @param model the model to add attributes to.
      * @param session the HTTP session to store game data.
      * @return the name of the Thymeleaf template.
      */
     @GetMapping("/game")
-    public String showGame(Model model, HttpSession session) {
+    public String showGame(@RequestParam(required = false) Integer userId, Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
-        Board board = new Board();
-        model.addAttribute("board", board);
+
+        if (userId == null) userId = (Integer) session.getAttribute("userId");
+        if (userId != null) {
+            session.setAttribute("userId", userId);
+            Board board = new Board();
+            model.addAttribute("board", board);
+            return "game";
+        } 
         if (user != null) {
             // TODO: Implement game construction logic
             return "game";
