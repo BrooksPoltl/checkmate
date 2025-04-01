@@ -13,13 +13,16 @@ import java.util.Optional;
 public class GameService {
     @Autowired
     private final GameRepository gameRepository;
+    public GameService(GameRepository gameRepository) {
+        this.gameRepository = gameRepository;
+    }
    
     /**
      * Method to get all games.
      * @param game - the game to save.
      * @return A created game
      */
-    public User saveGame(Game game) {
+    public Game saveGame(Game game) {
         return gameRepository.saveAndFlush(game);
     }
     /**

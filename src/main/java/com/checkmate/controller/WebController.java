@@ -1,7 +1,12 @@
 package com.checkmate.controller;
 
 import com.checkmate.model.User;
+import com.checkmate.model.Game;
+import com.checkmate.model.Board;
+
 import com.checkmate.service.UserService;
+import com.checkmate.service.GameService;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,8 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import jakarta.servlet.http.HttpSession;
-import com.checkmate.model.Board;
+
 
 ;
 /**
@@ -21,6 +27,8 @@ import com.checkmate.model.Board;
 public class WebController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private GameService gameService;
     /**
      * Method to display the user creation form.
      *
@@ -88,8 +96,10 @@ public class WebController {
     public String startGame(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user != null) {
-            // Setup game logic here
-            return "redirect:/game?userId=" + user.getId();
+            Game game = new Game(user.getId());
+            Game createdGame = gameService.saveGame(game);
+            session.setAttribute("game", createdGame);
+            return "redirect:/game?userId=" + user.getId() + "&gameId=" + createdGame.getId();
         } else {
             return "redirect:/users/create";
         }
@@ -103,19 +113,32 @@ public class WebController {
      * @return the name of the Thymeleaf template.
      */
     @GetMapping("/game")
-    public String showGame(@RequestParam(required = false) Integer userId, Model model, HttpSession session) {
+    public String showGame(
+        @RequestParam(required = false) Integer userId, 
+        @RequestParam(required = false) Integer gameId, 
+        Model model, 
+        HttpSession session
+        ) {
         User user = (User) session.getAttribute("user");
-
-        if (userId == null) userId = (Integer) session.getAttribute("userId");
-        if (userId != null) {
-            session.setAttribute("userId", userId);
+        Game game = (Game) session.getAttribute("game");
+        if (user == null) {
+            user = userService.getUserById(userId).orElse(null);
+            session.setAttribute("user", user);
+        }
+        if (game == null) {
+            game = gameService.getGameById(gameId).orElse(null);
+            session.setAttribute("game", game);
+        }
+        if (user != null && game != null) {
+            model.addAttribute("user", user);
+            model.addAttribute("game", game);
             Board board = new Board();
             model.addAttribute("board", board);
             return "game";
-        } 
-        if (user != null) {
-            // TODO: Implement game construction logic
-            return "game";
+        } else  if (user == null) {
+            return "redirect:/users/create";
+        } else if (game == null) {
+            return "redirect:/home";
         } else {
             return "redirect:/users/create";
         }
