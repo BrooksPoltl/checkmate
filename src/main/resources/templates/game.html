@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chess Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        .chessboard {
+            width: 800px;
+            height: 800px;
+            border: 2px solid #333;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        }
+        .square {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+        }
+        .light {
+            background-color: #ffffff;
+        }
+        .dark {
+            background-color: #b58863;
+        }
+        .info {
+            margin-bottom: 20px;
+        }
+        a {
+            display: inline-block;
+            margin-top: 10px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h2>Chess Game</h2>
+        </div>
+        <div class="chessboard">
+            <!-- Loop through 8 rows -->
+            <th:block th:each="row : ${#numbers.sequence(0, 7)}">
+                <!-- Loop through 8 columns -->
+                <th:block th:each="col : ${#numbers.sequence(0, 7)}">
+                    <div th:classappend="${(row + col) % 2 == 0} ? 'square light' : 'square dark'"
+                         th:text="${pieces[row][col]}">
+                    </div>
+                </th:block>
+            </th:block>
+        </div>
+        <a href="/home">Back to Home</a>
+    </div>
+</body>
+</html>

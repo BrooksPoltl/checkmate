@@ -1,4 +1,4 @@
-public package com.checkmate.model;
+package com.checkmate.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -46,6 +46,4 @@ public class Game {
     public void setCurrentPlayer(String currentPlayer) { this.currentPlayer = currentPlayer; }
     public List<Move> getMoves() { return moves; }
     public void setMoves(List<Move> moves) { this.moves = moves; }
-} {
-    
 }

@@ -80,11 +80,40 @@ public class WebController {
      */
     @PostMapping("/start-game")
     public String startGame(HttpSession session) {
-        Integer userId = (Integer) session.getAttribute("userId");
-        if (userId != null) {
-            //Game game = userService.startGame(userId);
-            //session.setAttribute("gameId", game.getId()); // Store game ID
+        User user = (User) session.getAttribute("user");
+        // Print user details for debugging
+        System.out.println("User ID: " + user.getId());
+        if (user != null) {
+            // Setup game logic here
             return "redirect:/game";
+        } else {
+            return "redirect:/users/create";
+        }
+    }
+    /**
+     * Method to display the game page.
+     *
+     * @param model the model to add attributes to.
+     * @param session the HTTP session to store game data.
+     * @return the name of the Thymeleaf template.
+     */
+    @GetMapping("/game")
+    public String showGame(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        String[][] pieces = {
+            {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"}, // Row 0 (Black back rank)
+            {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"}, // Row 1 (Black pawns)
+            {"", "", "", "", "", "", "", ""},           // Row 2
+            {"", "", "", "", "", "", "", ""},           // Row 3
+            {"", "", "", "", "", "", "", ""},           // Row 4
+            {"", "", "", "", "", "", "", ""},           // Row 5
+            {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"}, // Row 6 (White pawns)
+            {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"}  // Row 7 (White back rank)
+        };
+        model.addAttribute("pieces", pieces);
+        if (user != null) {
+            // TODO: Implement game construction logic
+            return "game";
         } else {
             return "redirect:/users/create";
         }
