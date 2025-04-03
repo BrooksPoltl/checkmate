@@ -14,25 +14,40 @@ public class ChessUtils {
 
         boolean isCapture = target != null && !target.getColor().equals(piece.getColor());
 
+        // Check if destination contains a piece of the same color
+        if (target != null && target.getColor().equals(piece.getColor())) {
+            return false; // Cannot capture own pieces
+        }
+
         switch (piece.getType()) {
             case "pawn":
-            int direction = piece.getColor().equals("white") ? -1 : 1;
-            int startRow = piece.getColor().equals("white") ? 6 : 1;
+                int direction = piece.getColor().equals("white") ? -1 : 1;
+                int startRow = piece.getColor().equals("white") ? 6 : 1;
 
-            // Forward move (one or two)
-            if (fromCol == toCol && target == null) {
-                // Single step forward
-                if (toRow == fromRow + direction) return true;
-                // Double step forward from starting position
-                if (fromRow == startRow && toRow == fromRow + 2 * direction
-                    && board.getSquares()[fromRow + direction][toCol] == null) return true;
-            }
-            // Diagonal capture
-            if (Math.abs(fromCol - toCol) == 1 && toRow == fromRow + direction && isCapture) return true;
-            return false;
-        default: 
-            // Implement other piece movement rules (rook, knight, bishop, queen, king)
-            return false;
+                // Forward move (one or two)
+                if (fromCol == toCol && target == null) {
+                    // Single step forward
+                    if (toRow == fromRow + direction) return true;
+                    // Double step forward from starting position
+                    if (fromRow == startRow && toRow == fromRow + 2 * direction
+                        && board.getSquares()[fromRow + direction][toCol] == null) return true;
+                }
+                // Diagonal capture
+                if (Math.abs(fromCol - toCol) == 1 && toRow == fromRow + direction && isCapture) return true;
+                return false;
+                
+            case "rook":
+                // Rooks move horizontally or vertically any number of squares
+                if (fromRow != toRow && fromCol != toCol) {
+                    return false; // Not a horizontal or vertical move
+                }
+                
+                // Check if the path is clear
+                return isPathClear(board, fromRow, fromCol, toRow, toCol);
+                
+            default: 
+                // Implement other piece movement rules (knight, bishop, queen, king)
+                return false;
         }
     }
 
@@ -41,11 +56,43 @@ public class ChessUtils {
         Piece piece = board.getSquares()[fromRow][fromCol];
         board.getSquares()[toRow][toCol] = piece; // Move the piece
         board.getSquares()[fromRow][fromCol] = null; // Clear the original square
-        
     }
 
-    private static boolean isPathClear(Board board, int fromRow, int fromCol, int toRow, int toCol) {
-        // TODO: Implement path checking logic
-        return true;
+    /**
+     * Checks if the path between two squares is clear (no pieces in the way)
+     * This is used for pieces like rooks, bishops, and queens that cannot jump over other pieces
+     * 
+     * @param board The chess board
+     * @param fromRow Starting row
+     * @param fromCol Starting column
+     * @param toRow Ending row
+     * @param toCol Ending column
+     * @return true if the path is clear, false otherwise
+     */
+    public static boolean isPathClear(Board board, int fromRow, int fromCol, int toRow, int toCol) {
+        // Determine the direction of movement
+        int rowStep = 0;
+        int colStep = 0;
+        
+        if (fromRow < toRow) rowStep = 1;
+        else if (fromRow > toRow) rowStep = -1;
+        
+        if (fromCol < toCol) colStep = 1;
+        else if (fromCol > toCol) colStep = -1;
+        
+        // Start from the square after the starting position
+        int currentRow = fromRow + rowStep;
+        int currentCol = fromCol + colStep;
+        
+        // Check each square along the path (excluding the destination square)
+        while (currentRow != toRow || currentCol != toCol) {
+            if (board.getSquares()[currentRow][currentCol] != null) {
+                return false; // Path is blocked
+            }
+            currentRow += rowStep;
+            currentCol += colStep;
+        }
+        
+        return true; // Path is clear
     }
 }
