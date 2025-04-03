@@ -55,6 +55,13 @@ tasks.withType(JavaCompile) {
 
 test {
     useJUnitPlatform()
+    
+    // Run this once at the beginning of all tests
+    doFirst {
+        println "Initial cleanup of test database data directory..."
+        delete "data"
+    }
+    
     testLogging {
         events "passed", "skipped", "failed", "standardOut", "standardError"
         showExceptions = true
@@ -74,7 +81,13 @@ test {
                     "${result.successfulTestCount} passed, " +
                     "${result.failedTestCount} failed, " +
                     "${result.skippedTestCount} skipped)"
+                println "Final cleanup of test database data directory..."
+                delete "data"
             }
         }
+    }
+    doLast {
+        println "Ensuring test database data directory is cleaned up..."
+        delete "data"
     }
 }
