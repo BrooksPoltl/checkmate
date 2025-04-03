@@ -38,7 +38,10 @@ public class ChessUtils {
 
 
     public static void applyMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
-        // TODO: Implement move application logic
+        Piece piece = board.getSquares()[fromRow][fromCol];
+        board.getSquares()[toRow][toCol] = piece; // Move the piece
+        board.getSquares()[fromRow][fromCol] = null; // Clear the original square
+        
     }
 
     private static boolean isPathClear(Board board, int fromRow, int fromCol, int toRow, int toCol) {
