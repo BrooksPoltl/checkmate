@@ -53,6 +53,28 @@ tasks.withType(JavaCompile) {
     dependsOn 'processResources'
 }
 
-tasks.named('test') {
+test {
     useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        showStandardStreams = true
+        
+        // Display test names and results
+        beforeTest { descriptor ->
+            logger.lifecycle("Running: " + descriptor)
+        }
+        
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println "\nResults: ${result.resultType} " +
+                    "(${result.testCount} tests, " +
+                    "${result.successfulTestCount} passed, " +
+                    "${result.failedTestCount} failed, " +
+                    "${result.skippedTestCount} skipped)"
+            }
+        }
+    }
 }
