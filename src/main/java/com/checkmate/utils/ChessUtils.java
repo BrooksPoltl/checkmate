@@ -53,6 +53,15 @@ public class ChessUtils {
                 
                 // Check if the path is clear
                 return isPathClear(board, fromRow, fromCol, toRow, toCol);
+            
+            case "knight":
+                // Knights move in an L-shape: two squares in one direction and one square perpendicular
+                if ((Math.abs(fromRow - toRow) == 2 && Math.abs(fromCol - toCol) == 1) ||
+                    (Math.abs(fromRow - toRow) == 1 && Math.abs(fromCol - toCol) == 2)) {
+                    return true; // Valid knight move
+                }
+                return false;
+
             default: 
                 // Implement other piece movement rules (knight, bishop, queen, king)
                 return false;
