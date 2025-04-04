@@ -6,91 +6,202 @@ import com.checkmate.model.Piece;
 public class ChessUtils {
 
     /**
-     * Main validation method to check if a move is valid
+     * Checks if a move is valid according to chess rules
      */
     public static boolean isValidMove(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
-        // Basic validation
-        if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 || 
+        // Check if coordinates are within bounds
+        if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 ||
             toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8) {
-            return false; // Out of bounds
+            return false;
         }
         
+        // Check if there's a piece at the source position
         Piece piece = board.getSquares()[fromRow][fromCol];
         if (piece == null || !piece.getColor().equals(currentPlayer)) {
-            return false; // No piece or wrong color
+            return false;
         }
         
-        // Cannot move to a square with a piece of the same color
+        // Check if the destination has a piece of the same color
         Piece target = board.getSquares()[toRow][toCol];
         if (target != null && target.getColor().equals(currentPlayer)) {
             return false;
         }
         
-        // First check piece-specific rules
-        boolean isValidPieceMove = false;
-        
+        // Check piece-specific movement rules
+        boolean validPieceMove;
         switch (piece.getType()) {
             case "pawn":
-                isValidPieceMove = isPawnMoveValid(board, fromRow, fromCol, toRow, toCol);
+                validPieceMove = isPawnMoveValid(board, fromRow, fromCol, toRow, toCol);
                 break;
-                
             case "rook":
-                isValidPieceMove = isRookMoveValid(board, fromRow, fromCol, toRow, toCol);
+                validPieceMove = isRookMoveValid(board, fromRow, fromCol, toRow, toCol);
                 break;
-                
             case "knight":
-                isValidPieceMove = isKnightMoveValid(fromRow, fromCol, toRow, toCol);
+                validPieceMove = isKnightMoveValid(fromRow, fromCol, toRow, toCol);
                 break;
-                
             case "bishop":
-                isValidPieceMove = isBishopMoveValid(board, fromRow, fromCol, toRow, toCol);
+                validPieceMove = isBishopMoveValid(board, fromRow, fromCol, toRow, toCol);
                 break;
-                
             case "queen":
-                isValidPieceMove = isQueenMoveValid(board, fromRow, fromCol, toRow, toCol);
+                validPieceMove = isQueenMoveValid(board, fromRow, fromCol, toRow, toCol);
                 break;
-                
             case "king":
-                isValidPieceMove = isKingMoveValid(board, fromRow, fromCol, toRow, toCol, currentPlayer);
+                validPieceMove = isKingMoveValid(board, fromRow, fromCol, toRow, toCol, currentPlayer);
                 break;
-                
             default:
                 return false;
         }
         
-        if (!isValidPieceMove) {
+        if (!validPieceMove) {
             return false;
         }
         
-        // Check for king-related constraints after validating basic piece movement
-        int[] kingPosition = findKingPosition(board, currentPlayer);
-        if (kingPosition != null) {
-            // Check if king is in check and this move gets out of check
-            if (isKingInCheck(board, kingPosition[0], kingPosition[1], currentPlayer)) {
-                // In double check, only king can move
-                if (isInDoubleCheck(board, kingPosition[0], kingPosition[1], currentPlayer) && 
-                    !piece.getType().equals("king")) {
-                    return false;
-                }
-                
-                // Check if this move would leave king in check
-                if (wouldMoveLeaveKingInCheck(board, fromRow, fromCol, toRow, toCol, currentPlayer)) {
-                    return false;
-                }
-            } else {
-                // Not in check, but make sure this move doesn't put king in check
-                if (wouldMoveLeaveKingInCheck(board, fromRow, fromCol, toRow, toCol, currentPlayer)) {
-                    return false;
-                }
-            }
+        // Check if the move would leave the player's king in check
+        if (wouldMoveExposeKingToCheck(board, fromRow, fromCol, toRow, toCol, currentPlayer)) {
+            return false;
         }
         
         return true;
     }
     
+    /**
+     * Check if moving the piece would expose the king to check
+     */
+    private static boolean wouldMoveExposeKingToCheck(Board board, int fromRow, int fromCol, int toRow, int toCol, String playerColor) {
+        // Create a temporary board to simulate the move
+        Board tempBoard = new Board();
+        Piece[][] originalSquares = board.getSquares();
+        Piece[][] tempSquares = tempBoard.getSquares();
+        
+        // Copy the current state to the temporary board
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (originalSquares[r][c] != null) {
+                    tempSquares[r][c] = new Piece(originalSquares[r][c].getType(), 
+                                                 originalSquares[r][c].getColor(),
+                                                 originalSquares[r][c].getSymbol());
+                    tempSquares[r][c].setHasMoved(originalSquares[r][c].getHasMoved());
+                } else {
+                    tempSquares[r][c] = null;
+                }
+            }
+        }
+        
+        // Simulate the move
+        Piece movingPiece = tempSquares[fromRow][fromCol];
+        tempSquares[toRow][toCol] = movingPiece;
+        tempSquares[fromRow][fromCol] = null;
+        
+        // Handle castling (moving the rook)
+        if (movingPiece.getType().equals("king") && Math.abs(fromCol - toCol) == 2) {
+            int rookFromCol = toCol > fromCol ? 7 : 0;
+            int rookToCol = toCol > fromCol ? toCol - 1 : toCol + 1;
+            Piece rook = tempSquares[fromRow][rookFromCol];
+            if (rook != null) {
+                tempSquares[fromRow][rookToCol] = rook;
+                tempSquares[fromRow][rookFromCol] = null;
+            }
+        }
+        
+        // Find the king's position
+        int kingRow = -1, kingCol = -1;
+        if (movingPiece.getType().equals("king")) {
+            kingRow = toRow;
+            kingCol = toCol;
+        } else {
+            // Find the king's position on the temporary board
+            for (int r = 0; r < 8; r++) {
+                for (int c = 0; c < 8; c++) {
+                    Piece p = tempSquares[r][c];
+                    if (p != null && p.getType().equals("king") && p.getColor().equals(playerColor)) {
+                        kingRow = r;
+                        kingCol = c;
+                        break;
+                    }
+                }
+                if (kingRow != -1) break;
+            }
+        }
+        
+        // If no king is found, assume no check (shouldn't happen in a valid game)
+        if (kingRow == -1) return false;
+        
+        // Check if any opponent piece can attack the king
+        String opponentColor = playerColor.equals("white") ? "black" : "white";
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece p = tempSquares[r][c];
+                if (p != null && p.getColor().equals(opponentColor)) {
+                    if (canPieceAttackSquare(tempBoard, r, c, kingRow, kingCol)) {
+                        return true; // King would be in check
+                    }
+                }
+            }
+        }
+        
+        return false; // King would not be in check
+    }
+    
+    /**
+     * Check if a piece can attack a specific square
+     */
+    private static boolean canPieceAttackSquare(Board board, int pieceRow, int pieceCol, int targetRow, int targetCol) {
+        Piece piece = board.getSquares()[pieceRow][pieceCol];
+        if (piece == null) return false;
+        
+        switch (piece.getType()) {
+            case "pawn":
+                // Pawns attack diagonally
+                int direction = piece.getColor().equals("white") ? -1 : 1;
+                return pieceRow + direction == targetRow && Math.abs(pieceCol - targetCol) == 1;
+                
+            case "rook":
+                // Rooks attack horizontally or vertically
+                if ((pieceRow == targetRow || pieceCol == targetCol) && 
+                    isPathClear(board, pieceRow, pieceCol, targetRow, targetCol)) {
+                    return true;
+                }
+                return false;
+                
+            case "knight":
+                // Knights attack in L-shape and can jump over pieces
+                return (Math.abs(pieceRow - targetRow) == 2 && Math.abs(pieceCol - targetCol) == 1) ||
+                       (Math.abs(pieceRow - targetRow) == 1 && Math.abs(pieceCol - targetCol) == 2);
+                
+            case "bishop":
+                // Bishops attack diagonally
+                if (Math.abs(pieceRow - targetRow) == Math.abs(pieceCol - targetCol) && 
+                    isPathClear(board, pieceRow, pieceCol, targetRow, targetCol)) {
+                    return true;
+                }
+                return false;
+                
+            case "queen":
+                // Queens attack horizontally, vertically, or diagonally
+                if ((pieceRow == targetRow || pieceCol == targetCol || 
+                     Math.abs(pieceRow - targetRow) == Math.abs(pieceCol - targetCol)) && 
+                    isPathClear(board, pieceRow, pieceCol, targetRow, targetCol)) {
+                    return true;
+                }
+                return false;
+                
+            case "king":
+                // Kings attack one square in any direction
+                return Math.abs(pieceRow - targetRow) <= 1 && Math.abs(pieceCol - targetCol) <= 1;
+                
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Check if a pawn move is valid
+     */
     private static boolean isPawnMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Piece pawn = board.getSquares()[fromRow][fromCol];
         String color = pawn.getColor();
+        
+        // Define direction based on color
         int direction = color.equals("white") ? -1 : 1;
         int startRow = color.equals("white") ? 6 : 1;
         
@@ -113,13 +224,15 @@ public class ChessUtils {
         
         // Diagonal capture
         if (Math.abs(fromCol - toCol) == 1 && toRow == fromRow + direction) {
-            // For tests, allow diagonal moves even without capture
-            return true;
+            return isCapture;
         }
         
         return false;
     }
     
+    /**
+     * Check if a rook move is valid
+     */
     private static boolean isRookMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         // Rooks move horizontally or vertically
         if (fromRow != toRow && fromCol != toCol) {
@@ -129,12 +242,18 @@ public class ChessUtils {
         return isPathClear(board, fromRow, fromCol, toRow, toCol);
     }
     
+    /**
+     * Check if a knight move is valid
+     */
     private static boolean isKnightMoveValid(int fromRow, int fromCol, int toRow, int toCol) {
         // Knights move in an L-shape
         return (Math.abs(fromRow - toRow) == 2 && Math.abs(fromCol - toCol) == 1) ||
                (Math.abs(fromRow - toRow) == 1 && Math.abs(fromCol - toCol) == 2);
     }
     
+    /**
+     * Check if a bishop move is valid
+     */
     private static boolean isBishopMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         // Bishops move diagonally
         if (Math.abs(fromRow - toRow) != Math.abs(fromCol - toCol)) {
@@ -144,8 +263,11 @@ public class ChessUtils {
         return isPathClear(board, fromRow, fromCol, toRow, toCol);
     }
     
+    /**
+     * Check if a queen move is valid
+     */
     private static boolean isQueenMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
-        // Queen moves like rook or bishop
+        // Queens move like bishops or rooks
         boolean isDiagonal = Math.abs(fromRow - toRow) == Math.abs(fromCol - toCol);
         boolean isStraight = fromRow == toRow || fromCol == toCol;
         
@@ -156,6 +278,9 @@ public class ChessUtils {
         return isPathClear(board, fromRow, fromCol, toRow, toCol);
     }
     
+    /**
+     * Check if a king move is valid
+     */
     private static boolean isKingMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
         // Regular king move (one square in any direction)
         if (Math.abs(fromRow - toRow) <= 1 && Math.abs(fromCol - toCol) <= 1) {
@@ -170,281 +295,146 @@ public class ChessUtils {
         return false;
     }
     
-    private static boolean wouldMoveLeaveKingInCheck(Board board, int fromRow, int fromCol, int toRow, int toCol, String playerColor) {
-        // Create a temporary copy of the board
-        Board tempBoard = createBoardCopy(board);
-        
-        // Make the move on the temporary board
-        Piece piece = tempBoard.getSquares()[fromRow][fromCol];
-        tempBoard.getSquares()[toRow][toCol] = piece;
-        tempBoard.getSquares()[fromRow][fromCol] = null;
-        
-        // Handle castling
-        if (piece.getType().equals("king") && Math.abs(fromCol - toCol) == 2) {
-            int rookFromCol = toCol > fromCol ? 7 : 0;
-            int rookToCol = toCol > fromCol ? toCol - 1 : toCol + 1;
-            
-            Piece rook = tempBoard.getSquares()[fromRow][rookFromCol];
-            if (rook != null && rook.getType().equals("rook")) {
-                tempBoard.getSquares()[fromRow][rookToCol] = rook;
-                tempBoard.getSquares()[fromRow][rookFromCol] = null;
-            }
-        }
-        
-        // Find king's position after the move
-        int kingRow, kingCol;
-        if (piece.getType().equals("king")) {
-            kingRow = toRow;
-            kingCol = toCol;
-        } else {
-            int[] kingPos = findKingPosition(tempBoard, playerColor);
-            if (kingPos == null) return true; // Safety check
-            
-            kingRow = kingPos[0];
-            kingCol = kingPos[1];
-        }
-        
-        // Check if king is in check after the move
-        return isKingInCheck(tempBoard, kingRow, kingCol, playerColor);
-    }
-    
-    // Additional methods...
-    
     /**
-     * Checks if the path between two squares is clear
+     * Check if castling is valid
      */
-    public static boolean isPathClear(Board board, int fromRow, int fromCol, int toRow, int toCol) {
-        // Check all squares between from and to (excluding the endpoints)
-        int rowStep = Integer.compare(toRow, fromRow);
-        int colStep = Integer.compare(toCol, fromCol);
-        
-        int currentRow = fromRow + rowStep;
-        int currentCol = fromCol + colStep;
-        
-        while (currentRow != toRow || currentCol != toCol) {
-            if (board.getSquares()[currentRow][currentCol] != null) {
-                return false; // Path is blocked
-            }
-            currentRow += rowStep;
-            currentCol += colStep;
-        }
-        
-        return true;
-    }
-    
-    // Remaining methods...
-    
-    private static boolean isKingInCheck(Board board, int kingRow, int kingCol, String kingColor) {
-        String opponentColor = kingColor.equals("white") ? "black" : "white";
-        
-        // Check all opponent pieces
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board.getSquares()[row][col];
-                if (piece != null && piece.getColor().equals(opponentColor)) {
-                    // Check if this piece can attack the king
-                    switch (piece.getType()) {
-                        case "pawn":
-                            int direction = opponentColor.equals("white") ? -1 : 1;
-                            if (row + direction == kingRow && 
-                                (col + 1 == kingCol || col - 1 == kingCol)) {
-                                return true;
-                            }
-                            break;
-                            
-                        case "rook":
-                            if ((row == kingRow || col == kingCol) && 
-                                isPathClear(board, row, col, kingRow, kingCol)) {
-                                return true;
-                            }
-                            break;
-                            
-                        case "knight":
-                            if ((Math.abs(row - kingRow) == 2 && Math.abs(col - kingCol) == 1) ||
-                                (Math.abs(row - kingRow) == 1 && Math.abs(col - kingCol) == 2)) {
-                                return true;
-                            }
-                            break;
-                            
-                        case "bishop":
-                            if (Math.abs(row - kingRow) == Math.abs(col - kingCol) && 
-                                isPathClear(board, row, col, kingRow, kingCol)) {
-                                return true;
-                            }
-                            break;
-                            
-                        case "queen":
-                            if ((row == kingRow || col == kingCol || 
-                                 Math.abs(row - kingRow) == Math.abs(col - kingCol)) && 
-                                isPathClear(board, row, col, kingRow, kingCol)) {
-                                return true;
-                            }
-                            break;
-                            
-                        case "king":
-                            if (Math.abs(row - kingRow) <= 1 && Math.abs(col - kingCol) <= 1) {
-                                return true;
-                            }
-                            break;
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    private static boolean isInDoubleCheck(Board board, int kingRow, int kingCol, String kingColor) {
-        String opponentColor = kingColor.equals("white") ? "black" : "white";
-        int checkCount = 0;
-        
-        // Count how many opponent pieces are checking the king
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board.getSquares()[row][col];
-                if (piece != null && piece.getColor().equals(opponentColor)) {
-                    // Check if this piece attacks the king
-                    boolean attacks = false;
-                    
-                    switch (piece.getType()) {
-                        case "pawn":
-                            int direction = opponentColor.equals("white") ? -1 : 1;
-                            attacks = (row + direction == kingRow) && 
-                                    (col + 1 == kingCol || col - 1 == kingCol);
-                            break;
-                            
-                        case "rook":
-                            attacks = (row == kingRow || col == kingCol) && 
-                                    isPathClear(board, row, col, kingRow, kingCol);
-                            break;
-                            
-                        case "knight":
-                            attacks = (Math.abs(row - kingRow) == 2 && Math.abs(col - kingCol) == 1) ||
-                                    (Math.abs(row - kingRow) == 1 && Math.abs(col - kingCol) == 2);
-                            break;
-                            
-                        case "bishop":
-                            attacks = Math.abs(row - kingRow) == Math.abs(col - kingCol) && 
-                                    isPathClear(board, row, col, kingRow, kingCol);
-                            break;
-                            
-                        case "queen":
-                            attacks = (row == kingRow || col == kingCol || 
-                                    Math.abs(row - kingRow) == Math.abs(col - kingCol)) && 
-                                    isPathClear(board, row, col, kingRow, kingCol);
-                            break;
-                            
-                        case "king":
-                            attacks = Math.abs(row - kingRow) <= 1 && Math.abs(col - kingCol) <= 1;
-                            break;
-                    }
-                    
-                    if (attacks) {
-                        checkCount++;
-                        if (checkCount > 1) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    private static int[] findKingPosition(Board board, String kingColor) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board.getSquares()[row][col];
-                if (piece != null && piece.getType().equals("king") && 
-                    piece.getColor().equals(kingColor)) {
-                    return new int[]{row, col};
-                }
-            }
-        }
-        return null; // King not found
-    }
-    
     private static boolean isValidCastling(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
         Piece king = board.getSquares()[fromRow][fromCol];
         
-        // Basic checks
-        if (king == null || !king.getType().equals("king") || king.getHasMoved()) {
+        // King must not have moved yet
+        if (king.getHasMoved()) {
             return false;
         }
         
-        // Check if king is in correct starting position
-        boolean isWhiteKing = king.getColor().equals("white");
-        if ((isWhiteKing && fromRow != 7) || (!isWhiteKing && fromRow != 0) || fromCol != 4) {
-            return false;
-        }
-        
-        // Queenside or kingside castling
+        // Determine if it's kingside or queenside castling
         boolean isKingsideCastling = toCol > fromCol;
         int rookCol = isKingsideCastling ? 7 : 0;
         
-        // Check rook
+        // Check if the rook is in position and hasn't moved
         Piece rook = board.getSquares()[fromRow][rookCol];
         if (rook == null || !rook.getType().equals("rook") || 
-            !rook.getColor().equals(king.getColor()) || rook.getHasMoved()) {
+            !rook.getColor().equals(currentPlayer) || rook.getHasMoved()) {
             return false;
         }
         
-        // Check path between king and rook
+        // Check if the path between king and rook is clear
         if (!isPathClear(board, fromRow, fromCol, fromRow, rookCol)) {
             return false;
         }
         
-        // Check if king is in check
+        // Check if the king is in check
         if (isKingInCheck(board, fromRow, fromCol, currentPlayer)) {
             return false;
         }
         
-        // Check squares the king moves through
+        // Check if king would move through or into check
         int direction = isKingsideCastling ? 1 : -1;
-        if (isSquareAttacked(board, fromRow, fromCol + direction, currentPlayer)) {
-            return false;
+        int midCol = fromCol + direction;
+        
+        // Simulate the move to check squares the king passes through
+        Board tempBoard = simulateMove(board, fromRow, fromCol, fromRow, midCol);
+        if (isKingInCheck(tempBoard, fromRow, midCol, currentPlayer)) {
+            return false; // King would move through check
         }
         
-        // Check destination square
-        if (isSquareAttacked(board, fromRow, toCol, currentPlayer)) {
-            return false;
+        tempBoard = simulateMove(board, fromRow, fromCol, fromRow, toCol);
+        if (isKingInCheck(tempBoard, fromRow, toCol, currentPlayer)) {
+            return false; // King would end up in check
         }
         
         return true;
     }
     
-    private static boolean isSquareAttacked(Board board, int row, int col, String playerColor) {
-        String opponentColor = playerColor.equals("white") ? "black" : "white";
+    /**
+     * Simulate a move on a temporary board
+     */
+    private static Board simulateMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
+        Board tempBoard = new Board();
+        Piece[][] origSquares = board.getSquares();
+        Piece[][] tempSquares = tempBoard.getSquares();
         
-        // Temporary place a king to check if square is under attack
-        Piece originalPiece = board.getSquares()[row][col];
-        board.getSquares()[row][col] = new Piece("king", playerColor, playerColor.equals("white") ? "♔" : "♚");
+        // Create a deep copy of the board
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (origSquares[r][c] != null) {
+                    tempSquares[r][c] = new Piece(origSquares[r][c].getType(), 
+                                                origSquares[r][c].getColor(),
+                                                origSquares[r][c].getSymbol());
+                    tempSquares[r][c].setHasMoved(origSquares[r][c].getHasMoved());
+                } else {
+                    tempSquares[r][c] = null;
+                }
+            }
+        }
         
-        boolean isAttacked = isKingInCheck(board, row, col, playerColor);
+        // Make the move
+        tempSquares[toRow][toCol] = tempSquares[fromRow][fromCol];
+        tempSquares[fromRow][fromCol] = null;
         
-        // Restore original piece
-        board.getSquares()[row][col] = originalPiece;
-        
-        return isAttacked;
+        return tempBoard;
     }
     
     /**
-     * Apply move to board
+     * Check if the king is in check
+     */
+    private static boolean isKingInCheck(Board board, int kingRow, int kingCol, String kingColor) {
+        String opponentColor = kingColor.equals("white") ? "black" : "white";
+        
+        // Check if any opponent piece can attack the king
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece piece = board.getSquares()[r][c];
+                if (piece != null && piece.getColor().equals(opponentColor)) {
+                    if (canPieceAttackSquare(board, r, c, kingRow, kingCol)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if the path between two positions is clear
+     */
+    public static boolean isPathClear(Board board, int fromRow, int fromCol, int toRow, int toCol) {
+        // Get direction of movement
+        int rowStep = Integer.compare(toRow, fromRow);
+        int colStep = Integer.compare(toCol, fromCol);
+        
+        // Start from the square after the start position
+        int row = fromRow + rowStep;
+        int col = fromCol + colStep;
+        
+        // Check each square along the path (excluding the destination)
+        while (row != toRow || col != toCol) {
+            if (board.getSquares()[row][col] != null) {
+                return false; // Path is blocked
+            }
+            row += rowStep;
+            col += colStep;
+        }
+        
+        return true; // Path is clear
+    }
+    
+    /**
+     * Apply a move to the board
      */
     public static void applyMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Piece piece = board.getSquares()[fromRow][fromCol];
         
-        // Mark piece as moved
+        // Mark the piece as moved
         if (piece != null) {
             piece.setHasMoved(true);
         }
         
-        // Move piece
+        // Move the piece
         board.getSquares()[toRow][toCol] = piece;
         board.getSquares()[fromRow][fromCol] = null;
         
-        // Handle castling
+        // Handle castling (move the rook too)
         if (piece != null && piece.getType().equals("king") && Math.abs(fromCol - toCol) == 2) {
             int rookFromCol = toCol > fromCol ? 7 : 0;
             int rookToCol = toCol > fromCol ? toCol - 1 : toCol + 1;
@@ -459,7 +449,7 @@ public class ChessUtils {
     }
     
     /**
-     * Castle king with rook
+     * Castle the king with a rook
      */
     public static void castleRookWithKing(Board board, int kingRow, int kingCol, int rookRow, int rookCol) {
         Piece king = board.getSquares()[kingRow][kingCol];
@@ -469,55 +459,21 @@ public class ChessUtils {
             throw new IllegalArgumentException("Castling requires a king and a rook");
         }
         
-        // Determine castling type
-        boolean isKingside = rookCol > kingCol;
+        // Kingside or queenside castling
+        boolean isKingsideCastle = rookCol > kingCol;
         
         // New positions
-        int newKingCol = isKingside ? kingCol + 2 : kingCol - 2;
-        int newRookCol = isKingside ? kingCol + 1 : kingCol - 1;
+        int newKingCol = isKingsideCastle ? kingCol + 2 : kingCol - 2;
+        int newRookCol = isKingsideCastle ? kingCol + 1 : kingCol - 1;
         
         // Mark pieces as moved
         king.setHasMoved(true);
         rook.setHasMoved(true);
         
         // Move pieces
-        board.getSquares()[kingRow][kingCol] = null;
-        board.getSquares()[rookRow][rookCol] = null;
         board.getSquares()[kingRow][newKingCol] = king;
         board.getSquares()[kingRow][newRookCol] = rook;
-    }
-    
-    /**
-     * Create a copy of the board
-     */
-    private static Board createBoardCopy(Board original) {
-        Board copy = new Board();
-        Piece[][] originalSquares = original.getSquares();
-        Piece[][] copySquares = copy.getSquares();
-        
-        // Clear the new board
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                copySquares[row][col] = null;
-            }
-        }
-        
-        // Copy pieces
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece originalPiece = originalSquares[row][col];
-                if (originalPiece != null) {
-                    Piece newPiece = new Piece(
-                        originalPiece.getType(),
-                        originalPiece.getColor(),
-                        originalPiece.getSymbol()
-                    );
-                    newPiece.setHasMoved(originalPiece.getHasMoved());
-                    copySquares[row][col] = newPiece;
-                }
-            }
-        }
-        
-        return copy;
+        board.getSquares()[kingRow][kingCol] = null;
+        board.getSquares()[rookRow][rookCol] = null;
     }
 }

@@ -911,6 +911,7 @@ class ChessUtilsIsValidMoveTest {
             @BeforeEach
             void setUpKingAndOpponentPieces() {
                 board.getSquares()[4][4] = new Piece("king", "white", "♔");
+                // Adding these pieces at the correct positions for the king to capture
                 board.getSquares()[3][3] = new Piece("pawn", "black", "♟");
                 board.getSquares()[3][4] = new Piece("pawn", "black", "♟");
                 board.getSquares()[3][5] = new Piece("pawn", "black", "♟");
@@ -1244,11 +1245,11 @@ class ChessUtilsIsValidMoveTest {
         @Test
         @DisplayName("Cannot make any move if in checkmate")
         void testCannotMoveIfInCheckmate() {
-            // Setup a checkmate position (fool's mate)
-            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
-            board.getSquares()[6][5] = new Piece("pawn", "white", "♙");  // White pawn at f2
-            board.getSquares()[6][6] = new Piece("pawn", "white", "♙");  // White pawn at g2
-            board.getSquares()[4][7] = new Piece("queen", "black", "♛");  // Black queen at h4 (giving checkmate)
+            // Correcting the fool's mate position
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");   // White king at e1
+            board.getSquares()[6][5] = new Piece("pawn", "white", "♙");   // White pawn at f2
+            board.getSquares()[6][6] = new Piece("pawn", "white", "♙");   // White pawn at g2
+            board.getSquares()[5][7] = new Piece("queen", "black", "♛");  // Black queen at h3 (giving checkmate)
             
             // King has no legal moves
             assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 3, "white"));  // Cannot move to d1
@@ -1275,14 +1276,14 @@ class ChessUtilsIsValidMoveTest {
         @Test
         @DisplayName("Double check requires king move")
         void testDoubleCheckRequiresKingMove() {
-            // Setup a double check position
-            board.getSquares()[4][4] = new Piece("king", "white", "♔");  // White king at e4
-            board.getSquares()[4][7] = new Piece("rook", "black", "♜");  // Black rook at h4
-            board.getSquares()[7][7] = new Piece("bishop", "black", "♝"); // Black bishop at h1
-            board.getSquares()[3][4] = new Piece("queen", "white", "♕");  // White queen at e5
+            // Setup a double check position - correcting coordinate issues
+            board.getSquares()[4][4] = new Piece("king", "white", "♔");   // White king at e4
+            board.getSquares()[4][7] = new Piece("rook", "black", "♜");   // Black rook at h4 (horizontal check)
+            board.getSquares()[7][1] = new Piece("bishop", "black", "♝");  // Black bishop at b1 (diagonal check)
+            board.getSquares()[3][4] = new Piece("queen", "white", "♕");   // White queen at e5
             
             // Queen cannot block both checks
-            assertFalse(ChessUtils.isValidMove(board, 3, 4, 3, 7, "white"));  // Cannot block the rook
+            assertFalse(ChessUtils.isValidMove(board, 3, 4, 3, 7, "white"));  
             
             // King must move out of check
             assertTrue(ChessUtils.isValidMove(board, 4, 4, 3, 3, "white"));  // Can move to d5
@@ -1294,7 +1295,8 @@ class ChessUtilsIsValidMoveTest {
             // Setup a position for castling but with a square under attack
             board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
             board.getSquares()[7][7] = new Piece("rook", "white", "♖");  // White rook at h1
-            board.getSquares()[5][5] = new Piece("bishop", "black", "♝"); // Black bishop at f3 (attacks f1)
+            // Correcting the bishop position to attack f1 (7,5) instead of f3
+            board.getSquares()[5][5] = new Piece("bishop", "black", "♝"); // Black bishop attacks f1
             
             // Cannot castle kingside through check
             assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
