@@ -197,7 +197,7 @@ public class ChessUtils {
             return false;
         }
         
-        // Check if king has moved
+        // Check if king has moved - use the hasMoved flag we set in applyMove
         if (king.getHasMoved()) {
             return false; // King has already moved, castling not allowed
         }
@@ -218,7 +218,7 @@ public class ChessUtils {
             return false; // Rook is not in its starting position or not the correct piece
         }
         
-        // Check if the rook has moved
+        // Check if the rook has moved - use the hasMoved flag
         if (rook.getHasMoved()) {
             return false; // Rook has already moved, castling not allowed
         }

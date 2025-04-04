@@ -1313,6 +1313,8 @@ class ChessUtilsIsValidMoveTest {
                 Piece king = board.getSquares()[7][4];
                 board.getSquares()[7][4] = null;
                 board.getSquares()[7][3] = king;
+                king.setHasMoved(true);
+                
                 board.getSquares()[7][3] = null;
                 board.getSquares()[7][4] = king;
                 
@@ -1323,6 +1325,7 @@ class ChessUtilsIsValidMoveTest {
                 Piece rook = board.getSquares()[7][0];
                 board.getSquares()[7][0] = null;
                 board.getSquares()[7][1] = rook;
+                rook.setHasMoved(true);
                 board.getSquares()[7][1] = null;
                 board.getSquares()[7][0] = rook;
                 
