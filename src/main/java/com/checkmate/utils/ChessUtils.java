@@ -93,6 +93,12 @@ public class ChessUtils {
 
     public static void applyMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Piece piece = board.getSquares()[fromRow][fromCol];
+        
+        // Mark the piece as having moved
+        if (piece != null) {
+            piece.setHasMoved(true);
+        }
+        
         board.getSquares()[toRow][toCol] = piece; // Move the piece
         board.getSquares()[fromRow][fromCol] = null; // Clear the original square
     }
@@ -120,6 +126,10 @@ public class ChessUtils {
         // New positions for the pieces
         int newKingCol = isKingsideCastle ? kingCol + 2 : kingCol - 2;
         int newRookCol = isKingsideCastle ? kingCol + 1 : kingCol - 1;
+        
+        // Mark both pieces as having moved
+        king.setHasMoved(true);
+        rook.setHasMoved(true);
         
         // Move the king
         board.getSquares()[kingRow][kingCol] = null;
@@ -182,9 +192,14 @@ public class ChessUtils {
     private static boolean isValidCastling(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
         Piece king = board.getSquares()[fromRow][fromCol];
         
-        // King must not have moved from its starting position
+        // Basic checks for king position
         if (king == null || !king.getType().equals("king")) {
             return false;
+        }
+        
+        // Check if king has moved
+        if (king.getHasMoved()) {
+            return false; // King has already moved, castling not allowed
         }
         
         // Check if king is in the correct starting position
@@ -203,13 +218,22 @@ public class ChessUtils {
             return false; // Rook is not in its starting position or not the correct piece
         }
         
+        // Check if the rook has moved
+        if (rook.getHasMoved()) {
+            return false; // Rook has already moved, castling not allowed
+        }
+        
         // Check if the path between king and rook is clear
         if (!isPathClear(board, fromRow, fromCol, fromRow, rookCol)) {
             return false; // Path between king and rook is not clear
         }
         
+        // Check if the king is currently in check
+        if (isKingInCheck(board, fromRow, fromCol, currentPlayer)) {
+            return false; // King is in check, castling not allowed
+        }
+        
         // Check if the king would move through or into check
-        // For simplicity, we're just checking if the squares the king moves through are under attack
         int direction = isKingsideCastle ? 1 : -1;
         
         // Check the square the king moves through
@@ -226,6 +250,19 @@ public class ChessUtils {
     }
     
     /**
+     * Checks if the king is in check
+     * 
+     * @param board The chess board
+     * @param kingRow Row of the king
+     * @param kingCol Column of the king
+     * @param playerColor Color of the player whose king is being checked ("white" or "black")
+     * @return true if the king is in check, false otherwise
+     */
+    private static boolean isKingInCheck(Board board, int kingRow, int kingCol, String playerColor) {
+        return isSquareUnderAttack(board, kingRow, kingCol, playerColor);
+    }
+    
+    /**
      * Checks if a square is under attack by any opponent piece
      * 
      * @param board The chess board
@@ -237,36 +274,68 @@ public class ChessUtils {
     private static boolean isSquareUnderAttack(Board board, int row, int col, String playerColor) {
         String opponentColor = playerColor.equals("white") ? "black" : "white";
         
-        // Check all opponent pieces on the board
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                Piece piece = board.getSquares()[r][c];
-                if (piece != null && piece.getColor().equals(opponentColor)) {
-                    // Skip the opponent's king to avoid infinite recursion when checking for check
-                    if (piece.getType().equals("king")) {
-                        // For king, manually check if it can attack the square
-                        if (Math.abs(r - row) <= 1 && Math.abs(c - col) <= 1) {
-                            return true; // King can attack this square
+        // Keep track of the original piece on the square being checked
+        Piece originalPiece = board.getSquares()[row][col];
+        
+        // If the square has a piece of the player's color, temporarily remove it
+        // to avoid interference when checking if the square is under attack
+        if (originalPiece != null && originalPiece.getColor().equals(playerColor)) {
+            board.getSquares()[row][col] = null;
+        }
+        
+        try {
+            // Check all opponent pieces on the board
+            for (int r = 0; r < 8; r++) {
+                for (int c = 0; c < 8; c++) {
+                    Piece piece = board.getSquares()[r][c];
+                    if (piece != null && piece.getColor().equals(opponentColor)) {
+                        // For king, manually check if it can attack the square to avoid infinite recursion
+                        if (piece.getType().equals("king")) {
+                            if (Math.abs(r - row) <= 1 && Math.abs(c - col) <= 1) {
+                                return true; // King can attack this square
+                            }
+                        } 
+                        // For pawns, manually check diagonal attacks
+                        else if (piece.getType().equals("pawn")) {
+                            int direction = opponentColor.equals("white") ? -1 : 1;
+                            if (r + direction == row && (c - 1 == col || c + 1 == col)) {
+                                return true; // Pawn can attack this square
+                            }
                         }
-                    } else {
-                        // For all other pieces, use the isValidMove method to check if they can attack
-                        // We temporarily place a dummy piece of the current player's color on the square to simulate "capturing" it
-                        Piece originalPiece = board.getSquares()[row][col];
-                        board.getSquares()[row][col] = new Piece("pawn", playerColor, "♙"); // Dummy piece
-                        
-                        boolean canAttack = isValidMove(board, r, c, row, col, opponentColor);
-                        
-                        // Restore the original piece (or null)
-                        board.getSquares()[row][col] = originalPiece;
-                        
-                        if (canAttack) {
-                            return true; // The square is under attack
+                        // For all other pieces, use a simplified check to avoid recursive issues
+                        else {
+                            if (piece.getType().equals("rook")) {
+                                // Rook checks - horizontal or vertical movement
+                                if ((r == row || c == col) && isPathClear(board, r, c, row, col)) {
+                                    return true;
+                                }
+                            } else if (piece.getType().equals("bishop")) {
+                                // Bishop checks - diagonal movement
+                                if (Math.abs(r - row) == Math.abs(c - col) && isPathClear(board, r, c, row, col)) {
+                                    return true;
+                                }
+                            } else if (piece.getType().equals("queen")) {
+                                // Queen checks - combination of rook and bishop
+                                if ((r == row || c == col || Math.abs(r - row) == Math.abs(c - col)) 
+                                    && isPathClear(board, r, c, row, col)) {
+                                    return true;
+                                }
+                            } else if (piece.getType().equals("knight")) {
+                                // Knight checks - L-shaped movement
+                                if ((Math.abs(r - row) == 2 && Math.abs(c - col) == 1) ||
+                                    (Math.abs(r - row) == 1 && Math.abs(c - col) == 2)) {
+                                    return true;
+                                }
+                            }
                         }
                     }
                 }
             }
+            
+            return false; // The square is not under attack
+        } finally {
+            // Restore the original piece
+            board.getSquares()[row][col] = originalPiece;
         }
-        
-        return false; // The square is not under attack
     }
 }
