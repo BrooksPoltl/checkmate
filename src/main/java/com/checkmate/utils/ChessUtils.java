@@ -44,7 +44,15 @@ public class ChessUtils {
                 
                 // Check if the path is clear
                 return isPathClear(board, fromRow, fromCol, toRow, toCol);
+            
+            case "bishop":
+                // Bishops move diagonally any number of squares
+                if (Math.abs(fromRow - toRow) != Math.abs(fromCol - toCol)) {
+                    return false; // Not a diagonal move
+                }
                 
+                // Check if the path is clear
+                return isPathClear(board, fromRow, fromCol, toRow, toCol);
             default: 
                 // Implement other piece movement rules (knight, bishop, queen, king)
                 return false;
