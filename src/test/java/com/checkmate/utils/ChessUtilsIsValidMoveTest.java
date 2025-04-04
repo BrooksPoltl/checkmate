@@ -1182,7 +1182,154 @@ class ChessUtilsIsValidMoveTest {
             }
         }
         
-        // TODO: Add castling tests when castling is implemented
+        @Nested
+        @DisplayName("Castling tests")
+        class CastlingTests {
+            
+            @BeforeEach
+            void setUpCastlingBoard() {
+                // Clear the board for testing
+                for (int row = 0; row < 8; row++) {
+                    for (int col = 0; col < 8; col++) {
+                        board.getSquares()[row][col] = null;
+                    }
+                }
+                
+                // Set up king and rooks in initial positions
+                board.getSquares()[7][4] = new Piece("king", "white", "♔");
+                board.getSquares()[7][0] = new Piece("rook", "white", "♖"); // Queenside rook
+                board.getSquares()[7][7] = new Piece("rook", "white", "♖"); // Kingside rook
+                
+                board.getSquares()[0][4] = new Piece("king", "black", "♚");
+                board.getSquares()[0][0] = new Piece("rook", "black", "♜"); // Queenside rook
+                board.getSquares()[0][7] = new Piece("rook", "black", "♜"); // Kingside rook
+            }
+            
+            @Test
+            @DisplayName("White kingside castling should be valid when path is clear")
+            void testWhiteKingsideCastling() {
+                assertTrue(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
+                
+                // Test the actual castling
+                ChessUtils.castleRookWithKing(board, 7, 4, 7, 7);
+                
+                // Verify king and rook have moved correctly
+                assertNull(board.getSquares()[7][4]); // King's original position is empty
+                assertNull(board.getSquares()[7][7]); // Rook's original position is empty
+                
+                Piece king = board.getSquares()[7][6];
+                Piece rook = board.getSquares()[7][5];
+                
+                assertNotNull(king);
+                assertNotNull(rook);
+                assertEquals("king", king.getType());
+                assertEquals("rook", rook.getType());
+            }
+            
+            @Test
+            @DisplayName("White queenside castling should be valid when path is clear")
+            void testWhiteQueensideCastling() {
+                assertTrue(ChessUtils.isValidMove(board, 7, 4, 7, 2, "white"));
+                
+                // Test the actual castling
+                ChessUtils.castleRookWithKing(board, 7, 4, 7, 0);
+                
+                // Verify king and rook have moved correctly
+                assertNull(board.getSquares()[7][4]); // King's original position is empty
+                assertNull(board.getSquares()[7][0]); // Rook's original position is empty
+                
+                Piece king = board.getSquares()[7][2];
+                Piece rook = board.getSquares()[7][3];
+                
+                assertNotNull(king);
+                assertNotNull(rook);
+                assertEquals("king", king.getType());
+                assertEquals("rook", rook.getType());
+            }
+            
+            @Test
+            @DisplayName("Black kingside castling should be valid when path is clear")
+            void testBlackKingsideCastling() {
+                currentPlayer = "black";
+                assertTrue(ChessUtils.isValidMove(board, 0, 4, 0, 6, currentPlayer));
+                
+                // Test the actual castling
+                ChessUtils.castleRookWithKing(board, 0, 4, 0, 7);
+                
+                // Verify king and rook have moved correctly
+                assertNull(board.getSquares()[0][4]); // King's original position is empty
+                assertNull(board.getSquares()[0][7]); // Rook's original position is empty
+                
+                Piece king = board.getSquares()[0][6];
+                Piece rook = board.getSquares()[0][5];
+                
+                assertNotNull(king);
+                assertNotNull(rook);
+                assertEquals("king", king.getType());
+                assertEquals("rook", rook.getType());
+            }
+            
+            @Test
+            @DisplayName("Castling should be invalid when pieces are in the way")
+            void testCastlingWithPiecesInTheWay() {
+                // Place a piece between the king and kingside rook
+                board.getSquares()[7][5] = new Piece("bishop", "white", "♗");
+                
+                // Kingside castling should now be invalid
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
+                
+                // Place a piece between the king and queenside rook
+                board.getSquares()[7][1] = new Piece("knight", "white", "♘");
+                
+                // Queenside castling should now be invalid
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 2, "white"));
+            }
+            
+            @Test
+            @DisplayName("Castling should be invalid when the king would move through check")
+            void testCastlingThroughCheck() {
+                // Place a black rook that attacks the square the king would move through during kingside castling
+                board.getSquares()[5][5] = new Piece("rook", "black", "♜");
+                
+                // Kingside castling should now be invalid because king would move through check
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
+            }
+            
+            @Test
+            @DisplayName("Castling should be invalid when the king is in check")
+            void testCastlingInCheck() {
+                // Place a black rook that puts the white king in check
+                board.getSquares()[4][4] = new Piece("rook", "black", "♜");
+                
+                // Both kingside and queenside castling should be invalid when king is in check
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 2, "white"));
+            }
+            
+            @Test
+            @DisplayName("Castling should be invalid if king or rook are not in initial positions")
+            void testCastlingWithMovedPieces() {
+                // Move king and put it back to simulate the king having moved
+                Piece king = board.getSquares()[7][4];
+                board.getSquares()[7][4] = null;
+                board.getSquares()[7][3] = king;
+                board.getSquares()[7][3] = null;
+                board.getSquares()[7][4] = king;
+                
+                // Kingside castling should now be invalid
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
+                
+                // Move rook and put it back to simulate the rook having moved
+                Piece rook = board.getSquares()[7][0];
+                board.getSquares()[7][0] = null;
+                board.getSquares()[7][1] = rook;
+                board.getSquares()[7][1] = null;
+                board.getSquares()[7][0] = rook;
+                
+                // Queenside castling should now be invalid
+                assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 2, "white"));
+            }
+        }
     }
     
     // Future test classes for other piece types can be added here
