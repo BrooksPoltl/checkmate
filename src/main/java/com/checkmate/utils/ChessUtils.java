@@ -71,6 +71,12 @@ public class ChessUtils {
                 
                 // Check if the path is clear
                 return isPathClear(board, fromRow, fromCol, toRow, toCol);
+            case "king":
+                // Kings move one square in any direction
+                if (Math.abs(fromRow - toRow) <= 1 && Math.abs(fromCol - toCol) <= 1) {
+                    return true; // Valid king move
+                }
+                return false;
             default: 
                 // Implement other piece movement rules (knight, bishop, queen, king)
                 return false;
