@@ -19,6 +19,8 @@ public class ChessUtils {
             return false; // Cannot capture own pieces
         }
 
+        boolean isValidBasedOnPieceRules = false;
+        
         switch (piece.getType()) {
             case "pawn":
                 int direction = piece.getColor().equals("white") ? -1 : 1;
@@ -27,69 +29,179 @@ public class ChessUtils {
                 // Forward move (one or two)
                 if (fromCol == toCol && target == null) {
                     // Single step forward
-                    if (toRow == fromRow + direction) return true;
+                    if (toRow == fromRow + direction) isValidBasedOnPieceRules = true;
                     // Double step forward from starting position
                     if (fromRow == startRow && toRow == fromRow + 2 * direction
-                        && board.getSquares()[fromRow + direction][toCol] == null) return true;
+                        && board.getSquares()[fromRow + direction][toCol] == null) isValidBasedOnPieceRules = true;
                 }
                 // Diagonal capture
-                if (Math.abs(fromCol - toCol) == 1 && toRow == fromRow + direction && isCapture) return true;
-                return false;
+                if (Math.abs(fromCol - toCol) == 1 && toRow == fromRow + direction && isCapture) isValidBasedOnPieceRules = true;
+                break;
                 
             case "rook":
                 // Rooks move horizontally or vertically any number of squares
                 if (fromRow != toRow && fromCol != toCol) {
-                    return false; // Not a horizontal or vertical move
+                    isValidBasedOnPieceRules = false; // Not a horizontal or vertical move
+                } else {
+                    // Check if the path is clear
+                    isValidBasedOnPieceRules = isPathClear(board, fromRow, fromCol, toRow, toCol);
                 }
-                
-                // Check if the path is clear
-                return isPathClear(board, fromRow, fromCol, toRow, toCol);
+                break;
             
             case "bishop":
                 // Bishops move diagonally any number of squares
                 if (Math.abs(fromRow - toRow) != Math.abs(fromCol - toCol)) {
-                    return false; // Not a diagonal move
+                    isValidBasedOnPieceRules = false; // Not a diagonal move
+                } else {
+                    // Check if the path is clear
+                    isValidBasedOnPieceRules = isPathClear(board, fromRow, fromCol, toRow, toCol);
                 }
-                
-                // Check if the path is clear
-                return isPathClear(board, fromRow, fromCol, toRow, toCol);
+                break;
             
             case "knight":
                 // Knights move in an L-shape: two squares in one direction and one square perpendicular
                 if ((Math.abs(fromRow - toRow) == 2 && Math.abs(fromCol - toCol) == 1) ||
                     (Math.abs(fromRow - toRow) == 1 && Math.abs(fromCol - toCol) == 2)) {
-                    return true; // Valid knight move
+                    isValidBasedOnPieceRules = true; // Valid knight move
                 }
-                return false;
+                break;
+                
             case "queen":
                 // Queens move like both rooks and bishops
                 if (fromRow != toRow && fromCol != toCol) {
                     if (Math.abs(fromRow - toRow) != Math.abs(fromCol - toCol)) {
-                        return false; // Not a valid queen move
+                        isValidBasedOnPieceRules = false; // Not a valid queen move
+                    } else {
+                        // Check if the path is clear for diagonal movement
+                        isValidBasedOnPieceRules = isPathClear(board, fromRow, fromCol, toRow, toCol);
                     }
+                } else {
+                    // Check if the path is clear for horizontal/vertical movement
+                    isValidBasedOnPieceRules = isPathClear(board, fromRow, fromCol, toRow, toCol);
                 }
+                break;
                 
-                // Check if the path is clear
-                return isPathClear(board, fromRow, fromCol, toRow, toCol);
             case "king":
                 // Kings move one square in any direction
                 if (Math.abs(fromRow - toRow) <= 1 && Math.abs(fromCol - toCol) <= 1) {
-                    return true; // Valid king move
-                }
-                
-                // Check for castling
-                if (fromRow == toRow && Math.abs(fromCol - toCol) == 2) {
+                    isValidBasedOnPieceRules = true; // Valid king move
+                } else if (fromRow == toRow && Math.abs(fromCol - toCol) == 2) {
                     // Castling move (king moves two squares horizontally)
-                    return isValidCastling(board, fromRow, fromCol, toRow, toCol, currentPlayer);
+                    isValidBasedOnPieceRules = isValidCastling(board, fromRow, fromCol, toRow, toCol, currentPlayer);
                 }
+                break;
                 
-                return false;
             default: 
-                // Implement other piece movement rules (knight, bishop, queen, king)
-                return false;
+                isValidBasedOnPieceRules = false;
         }
+        
+        // If the move is not valid based on piece rules, return immediately
+        if (!isValidBasedOnPieceRules) {
+            return false;
+        }
+        
+        // Check if this move would put or leave the player's own king in check
+        if (wouldMoveResultInCheck(board, fromRow, fromCol, toRow, toCol, currentPlayer)) {
+            return false;
+        }
+        
+        return true;
     }
 
+    /**
+     * Checks if a move would result in the player's own king being in check
+     *
+     * @param board The chess board
+     * @param fromRow Starting row
+     * @param fromCol Starting column
+     * @param toRow Ending row
+     * @param toCol Ending column
+     * @param playerColor The current player's color
+     * @return true if the move would result in check, false otherwise
+     */
+    private static boolean wouldMoveResultInCheck(Board board, int fromRow, int fromCol, int toRow, int toCol, String playerColor) {
+        // Create a temporary copy of the board to simulate the move
+        Board tempBoard = createBoardCopy(board);
+        
+        // Make the move on the temporary board
+        Piece piece = tempBoard.getSquares()[fromRow][fromCol];
+        Piece capturedPiece = tempBoard.getSquares()[toRow][toCol];
+        tempBoard.getSquares()[toRow][toCol] = piece;
+        tempBoard.getSquares()[fromRow][fromCol] = null;
+        
+        // Find the king's position
+        int[] kingPosition = findKingPosition(tempBoard, playerColor);
+        
+        // If the king wasn't found (shouldn't happen in a valid chess position), assume check
+        if (kingPosition == null) {
+            return true;
+        }
+        
+        // Check if the king is in check after the move
+        boolean inCheck = isSquareUnderAttack(tempBoard, kingPosition[0], kingPosition[1], playerColor);
+        
+        return inCheck;
+    }
+    
+    /**
+     * Creates a deep copy of the chess board
+     *
+     * @param original The original board
+     * @return A new board with the same piece positions
+     */
+    private static Board createBoardCopy(Board original) {
+        Board copy = new Board();
+        Piece[][] originalSquares = original.getSquares();
+        Piece[][] copySquares = copy.getSquares();
+        
+        // Clear the new board (which has the initial setup)
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                copySquares[row][col] = null;
+            }
+        }
+        
+        // Copy the pieces from the original board
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece originalPiece = originalSquares[row][col];
+                if (originalPiece != null) {
+                    // Create a new piece with the same properties
+                    Piece newPiece = new Piece(
+                        originalPiece.getType(),
+                        originalPiece.getColor(),
+                        originalPiece.getSymbol()
+                    );
+                    newPiece.setHasMoved(originalPiece.getHasMoved());
+                    copySquares[row][col] = newPiece;
+                }
+            }
+        }
+        
+        return copy;
+    }
+    
+    /**
+     * Finds the position of a player's king on the board
+     *
+     * @param board The chess board
+     * @param playerColor The player's color ("white" or "black")
+     * @return An array containing the king's [row, col], or null if not found
+     */
+    private static int[] findKingPosition(Board board, String playerColor) {
+        Piece[][] squares = board.getSquares();
+        
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = squares[row][col];
+                if (piece != null && piece.getType().equals("king") && piece.getColor().equals(playerColor)) {
+                    return new int[]{row, col};
+                }
+            }
+        }
+        
+        return null; // King not found (shouldn't happen in a valid chess position)
+    }
 
     public static void applyMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Piece piece = board.getSquares()[fromRow][fromCol];
