@@ -737,5 +737,249 @@ class ChessUtilsIsValidMoveTest {
         }
     }
     
+    @Nested
+    @DisplayName("Queen movement validation")
+    class QueenTests {
+        
+        @BeforeEach
+        void setUpQueenTests() {
+            // Clear the board for testing
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    board.getSquares()[row][col] = null;
+                }
+            }
+        }
+        
+        @Nested
+        @DisplayName("Basic Queen movement tests")
+        class BasicQueenMovementTests {
+            
+            @BeforeEach
+            void setUpQueenOnBoard() {
+                // Place a white queen in the middle of the board for flexible testing
+                board.getSquares()[4][4] = new Piece("queen", "white", "♕");
+            }
+            
+            @Test
+            @DisplayName("Can move horizontally to the right")
+            void testMoveHorizontallyRight() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 4, 7, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move horizontally to the left")
+            void testMoveHorizontallyLeft() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 4, 0, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move vertically upward")
+            void testMoveVerticallyUp() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 0, 4, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move vertically downward")
+            void testMoveVerticallyDown() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 7, 4, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move diagonally top-right")
+            void testMoveDiagonallyTopRight() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 1, 7, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move diagonally top-left")
+            void testMoveDiagonallyTopLeft() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 1, 1, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move diagonally bottom-right")
+            void testMoveDiagonallyBottomRight() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 7, 7, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move diagonally bottom-left")
+            void testMoveDiagonallyBottomLeft() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 7, 1, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can move to adjacent squares in all directions")
+            void testMoveToAdjacentSquares() {
+                // Horizontal and vertical (rook-like) moves
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 4, 5, currentPlayer)); // Right
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 4, 3, currentPlayer)); // Left
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 3, 4, currentPlayer)); // Up
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 5, 4, currentPlayer)); // Down
+                
+                // Diagonal (bishop-like) moves
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 3, 3, currentPlayer)); // Top-left
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 3, 5, currentPlayer)); // Top-right
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 5, 3, currentPlayer)); // Bottom-left
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 5, 5, currentPlayer)); // Bottom-right
+            }
+        }
+        
+        @Nested
+        @DisplayName("Queen capture tests")
+        class QueenCaptureTests {
+            
+            @BeforeEach
+            void setUpQueenAndOpponentPieces() {
+                // Place a white queen in the middle of the board
+                board.getSquares()[4][4] = new Piece("queen", "white", "♕");
+                
+                // Place some opponent pieces for capture tests
+                board.getSquares()[4][7] = new Piece("pawn", "black", "♟"); // Horizontal
+                board.getSquares()[7][4] = new Piece("knight", "black", "♞"); // Vertical
+                board.getSquares()[2][2] = new Piece("pawn", "black", "♟"); // Diagonal top-left
+                board.getSquares()[7][7] = new Piece("bishop", "black", "♝"); // Diagonal bottom-right
+            }
+            
+            @Test
+            @DisplayName("Can capture horizontally")
+            void testCaptureHorizontally() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 4, 7, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can capture vertically")
+            void testCaptureVertically() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 7, 4, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can capture diagonally")
+            void testCaptureDiagonally() {
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 2, 2, currentPlayer)); // Top-left
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 7, 7, currentPlayer)); // Bottom-right
+            }
+            
+            @Test
+            @DisplayName("Cannot capture pieces of the same color")
+            void testCannotCaptureSameColorPieces() {
+                // Place friendly pieces in various paths
+                board.getSquares()[4][6] = new Piece("pawn", "white", "♙"); // Horizontal
+                board.getSquares()[6][4] = new Piece("knight", "white", "♘"); // Vertical
+                board.getSquares()[3][3] = new Piece("pawn", "white", "♙"); // Diagonal
+                
+                // Try to "capture" the white pieces
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 4, 6, currentPlayer));
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 6, 4, currentPlayer));
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 3, 3, currentPlayer));
+            }
+        }
+        
+        @Nested
+        @DisplayName("Invalid Queen movement tests")
+        class InvalidQueenMovementTests {
+            
+            @BeforeEach
+            void setUpQueenWithObstacles() {
+                // Place a white queen in the middle of the board
+                board.getSquares()[4][4] = new Piece("queen", "white", "♕");
+                
+                // Place obstacles in the queen's paths
+                board.getSquares()[4][6] = new Piece("pawn", "white", "♙"); // Horizontal, same color
+                board.getSquares()[2][4] = new Piece("pawn", "black", "♟"); // Vertical, opponent
+                board.getSquares()[3][3] = new Piece("pawn", "white", "♙"); // Diagonal, same color
+                board.getSquares()[6][6] = new Piece("pawn", "black", "♟"); // Diagonal, opponent
+            }
+            
+            @Test
+            @DisplayName("Cannot move in non-straight or non-diagonal paths")
+            void testCannotMoveInNonStraightOrNonDiagonalPaths() {
+                // Try to move like a knight
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 6, 5, currentPlayer));
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 2, 3, currentPlayer));
+                
+                // Try other invalid moves
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 6, 7, currentPlayer)); // Not a straight or diagonal path
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 2, 5, currentPlayer)); // Not a straight or diagonal path
+            }
+            
+            @Test
+            @DisplayName("Cannot jump over pieces horizontally or vertically")
+            void testCannotJumpOverPiecesHorizontallyOrVertically() {
+                // Try to jump over the white pawn horizontally
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 4, 7, currentPlayer));
+                
+                // Try to jump over the black pawn vertically
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 0, 4, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Cannot jump over pieces diagonally")
+            void testCannotJumpOverPiecesDiagonally() {
+                // Try to jump over the white pawn diagonally
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 1, 1, currentPlayer));
+                
+                // Try to jump over the black pawn diagonally
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 7, 7, currentPlayer));
+            }
+            
+            @Test
+            @DisplayName("Can stop at opponent piece for capture but not move past it")
+            void testCannotMovePastOpponentPiece() {
+                // Can capture the black pawn at (2,4)
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 2, 4, currentPlayer));
+                
+                // Cannot move past it
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 1, 4, currentPlayer));
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 0, 4, currentPlayer));
+                
+                // Can capture the black pawn at (6,6)
+                assertTrue(ChessUtils.isValidMove(board, 4, 4, 6, 6, currentPlayer));
+                
+                // Cannot move past it
+                assertFalse(ChessUtils.isValidMove(board, 4, 4, 7, 7, currentPlayer));
+            }
+        }
+        
+        @Nested
+        @DisplayName("Black Queen movement tests")
+        class BlackQueenMovementTests {
+            
+            @BeforeEach
+            void setUpBlackQueen() {
+                // Place a black queen in the middle of the board
+                board.getSquares()[3][3] = new Piece("queen", "black", "♛");
+                currentPlayer = "black"; // Switch to black's turn
+            }
+            
+            @Test
+            @DisplayName("Black queen can move in all directions")
+            void testBlackQueenMovement() {
+                // Horizontal and vertical movements
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 3, 7, currentPlayer)); // Horizontal
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 7, 3, currentPlayer)); // Vertical
+                
+                // Diagonal movements
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 0, 0, currentPlayer)); // Top-left
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 0, 6, currentPlayer)); // Top-right
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 7, 7, currentPlayer)); // Bottom-right
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 6, 0, currentPlayer)); // Bottom-left
+            }
+            
+            @Test
+            @DisplayName("Black queen can capture white pieces")
+            void testBlackQueenCapture() {
+                // Place white pieces for the black queen to capture
+                board.getSquares()[3][7] = new Piece("pawn", "white", "♙"); // Horizontal
+                board.getSquares()[0][0] = new Piece("rook", "white", "♖"); // Diagonal
+                
+                // Black queen should be able to capture the white pieces
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 3, 7, currentPlayer)); // Horizontal capture
+                assertTrue(ChessUtils.isValidMove(board, 3, 3, 0, 0, currentPlayer)); // Diagonal capture
+            }
+        }
+    }
+    
     // Future test classes for other piece types can be added here
 }
