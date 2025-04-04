@@ -1149,4 +1149,161 @@ class ChessUtilsIsValidMoveTest {
             }
         }
     }
+
+    @Nested
+    @DisplayName("Check prevention tests")
+    class CheckPreventionTests {
+        
+        @BeforeEach
+        void setUpCheckPreventionTests() {
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    board.getSquares()[row][col] = null;
+                }
+            }
+        }
+        
+        @Test
+        @DisplayName("Cannot move a piece that would expose king to check")
+        void testCannotMoveToExposeKingToCheck() {
+            // Setup a position where moving a piece would expose the king to check
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[7][3] = new Piece("queen", "white", "♕"); // White queen at d1
+            board.getSquares()[0][3] = new Piece("rook", "black", "♜");  // Black rook at d8
+            
+            // Moving the queen would expose the king to the rook's attack
+            assertFalse(ChessUtils.isValidMove(board, 7, 3, 6, 3, "white"));
+        }
+        
+        @Test
+        @DisplayName("Cannot move a pinned piece in a way that breaks the pin")
+        void testCannotMovePinnedPieceInWrongDirection() {
+            // Setup a position with a pinned bishop
+            board.getSquares()[4][4] = new Piece("king", "white", "♔");  // White king at e4
+            board.getSquares()[3][3] = new Piece("bishop", "white", "♗"); // White bishop at d5
+            board.getSquares()[1][1] = new Piece("queen", "black", "♛");  // Black queen at b7
+            
+            // The bishop is pinned and can only move along the diagonal to block or capture
+            assertFalse(ChessUtils.isValidMove(board, 3, 3, 2, 4, "white")); // Cannot move in other direction
+            
+            // However, it can move along the pin line
+            assertTrue(ChessUtils.isValidMove(board, 3, 3, 2, 2, "white")); // Can move along the diagonal
+        }
+        
+        @Test
+        @DisplayName("King cannot move into check")
+        void testKingCannotMoveIntoCheck() {
+            // Setup a position where the king would move into check
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[5][3] = new Piece("queen", "black", "♛");  // Black queen at d3
+            
+            // King cannot move to a square that's under attack
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 4, "white")); // d2 is under attack
+        }
+        
+        @Test
+        @DisplayName("Piece must block check if king is in check")
+        void testMustBlockCheckIfKingInCheck() {
+            // Setup a position where the king is in check
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[5][4] = new Piece("queen", "black", "♛");  // Black queen at e3 (giving check)
+            board.getSquares()[6][2] = new Piece("knight", "white", "♘"); // White knight at c2
+            board.getSquares()[6][6] = new Piece("rook", "white", "♖");   // White rook at g2
+            
+            // Knight cannot make a move that doesn't address the check
+            assertFalse(ChessUtils.isValidMove(board, 6, 2, 4, 3, "white"));
+            
+            // Rook can move to block the check
+            assertTrue(ChessUtils.isValidMove(board, 6, 6, 6, 4, "white"));
+        }
+        
+        @Test
+        @DisplayName("Piece must capture checking piece if king is in check")
+        void testMustCaptureCheckingPieceIfKingInCheck() {
+            // Setup a position where the king is in check
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[5][4] = new Piece("queen", "black", "♛");  // Black queen at e3 (giving check)
+            board.getSquares()[4][4] = new Piece("rook", "white", "♖");   // White rook at e4
+            
+            // Rook can capture the checking queen
+            assertTrue(ChessUtils.isValidMove(board, 4, 4, 5, 4, "white"));
+        }
+        
+        @Test
+        @DisplayName("King must move out of check if no other option")
+        void testKingMustMoveOutOfCheck() {
+            // Setup a position where the king is in check and must move
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[0][4] = new Piece("queen", "black", "♛");  // Black queen at e8 (giving check)
+            
+            // King must move out of check
+            assertTrue(ChessUtils.isValidMove(board, 7, 4, 7, 3, "white"));  // Can move to d1
+            assertTrue(ChessUtils.isValidMove(board, 7, 4, 7, 5, "white"));  // Can move to f1
+        }
+        
+        @Test
+        @DisplayName("Cannot make any move if in checkmate")
+        void testCannotMoveIfInCheckmate() {
+            // Setup a checkmate position (fool's mate)
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[6][5] = new Piece("pawn", "white", "♙");  // White pawn at f2
+            board.getSquares()[6][6] = new Piece("pawn", "white", "♙");  // White pawn at g2
+            board.getSquares()[4][7] = new Piece("queen", "black", "♛");  // Black queen at h4 (giving checkmate)
+            
+            // King has no legal moves
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 3, "white"));  // Cannot move to d1
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 3, "white"));  // Cannot move to d2
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 4, "white"));  // Cannot move to e2
+            
+            // Cannot move pawns either as they don't block the check
+            assertFalse(ChessUtils.isValidMove(board, 6, 5, 5, 5, "white"));  // Cannot move f-pawn
+            assertFalse(ChessUtils.isValidMove(board, 6, 6, 5, 6, "white"));  // Cannot move g-pawn
+        }
+        
+        @Test
+        @DisplayName("Moving a piece away from king doesn't affect check status")
+        void testMovingAwayFromKingDoesNotAffectCheck() {
+            // Setup a position with pieces away from king
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[7][0] = new Piece("rook", "white", "♖");  // White rook at a1
+            board.getSquares()[0][0] = new Piece("rook", "black", "♜");  // Black rook at a8
+            
+            // Moving the rook (which is not involved in any pin or check) should be valid
+            assertTrue(ChessUtils.isValidMove(board, 7, 0, 6, 0, "white"));  // Can move to a2
+        }
+        
+        @Test
+        @DisplayName("Double check requires king move")
+        void testDoubleCheckRequiresKingMove() {
+            // Setup a double check position
+            board.getSquares()[4][4] = new Piece("king", "white", "♔");  // White king at e4
+            board.getSquares()[4][7] = new Piece("rook", "black", "♜");  // Black rook at h4
+            board.getSquares()[7][7] = new Piece("bishop", "black", "♝"); // Black bishop at h1
+            board.getSquares()[3][4] = new Piece("queen", "white", "♕");  // White queen at e5
+            
+            // Queen cannot block both checks
+            assertFalse(ChessUtils.isValidMove(board, 3, 4, 3, 7, "white"));  // Cannot block the rook
+            
+            // King must move out of check
+            assertTrue(ChessUtils.isValidMove(board, 4, 4, 3, 3, "white"));  // Can move to d5
+        }
+        
+        @Test
+        @DisplayName("Cannot castle through check")
+        void testCannotCastleThroughCheck() {
+            // Setup a position for castling but with a square under attack
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");  // White king at e1
+            board.getSquares()[7][7] = new Piece("rook", "white", "♖");  // White rook at h1
+            board.getSquares()[5][5] = new Piece("bishop", "black", "♝"); // Black bishop at f3 (attacks f1)
+            
+            // Cannot castle kingside through check
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 6, "white"));
+        }
+        
+        @Test
+        @DisplayName("En passant capture cannot expose king to check")
+        void testEnPassantCannotExposeKingToCheck() {
+            // TODO: Implement this test when en passant is implemented
+        }
+    }
 }
