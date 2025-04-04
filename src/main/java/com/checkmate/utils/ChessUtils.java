@@ -61,7 +61,16 @@ public class ChessUtils {
                     return true; // Valid knight move
                 }
                 return false;
-
+            case "queen":
+                // Queens move like both rooks and bishops
+                if (fromRow != toRow && fromCol != toCol) {
+                    if (Math.abs(fromRow - toRow) != Math.abs(fromCol - toCol)) {
+                        return false; // Not a valid queen move
+                    }
+                }
+                
+                // Check if the path is clear
+                return isPathClear(board, fromRow, fromCol, toRow, toCol);
             default: 
                 // Implement other piece movement rules (knight, bishop, queen, king)
                 return false;
