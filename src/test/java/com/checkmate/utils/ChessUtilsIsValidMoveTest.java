@@ -19,6 +19,13 @@ class ChessUtilsIsValidMoveTest {
     void setUp() {
         board = new Board();
         currentPlayer = "white";
+        
+        // Clear the board by setting all squares to null
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                board.getSquares()[row][col] = null;
+            }
+        }
     }
     
     @Nested
@@ -28,6 +35,14 @@ class ChessUtilsIsValidMoveTest {
         @Nested
         @DisplayName("White pawn movement tests")
         class WhitePawnMovementTests {
+            
+            @BeforeEach
+            void setUpWhitePawns() {
+                // Set up white pawns in their starting positions (6th row)
+                for (int col = 0; col < 8; col++) {
+                    board.getSquares()[6][col] = new Piece("pawn", "white", "♙");
+                }
+            }
             
             @Test
             @DisplayName("Can move forward one square")
@@ -74,7 +89,11 @@ class ChessUtilsIsValidMoveTest {
         class BlackPawnMovementTests {
             
             @BeforeEach
-            void setBlackPlayer() {
+            void setUpBlackPawns() {
+                // Set up black pawns in their starting positions (1st row)
+                for (int col = 0; col < 8; col++) {
+                    board.getSquares()[1][col] = new Piece("pawn", "black", "♟");
+                }
                 currentPlayer = "black";
             }
             
@@ -911,7 +930,7 @@ class ChessUtilsIsValidMoveTest {
             @BeforeEach
             void setUpKingAndOpponentPieces() {
                 board.getSquares()[4][4] = new Piece("king", "white", "♔");
-                // Adding these pieces at the correct positions for the king to capture
+                // Add opponent pieces around the king for capture testing
                 board.getSquares()[3][3] = new Piece("pawn", "black", "♟");
                 board.getSquares()[3][4] = new Piece("pawn", "black", "♟");
                 board.getSquares()[3][5] = new Piece("pawn", "black", "♟");
@@ -1025,12 +1044,7 @@ class ChessUtilsIsValidMoveTest {
             
             @BeforeEach
             void setUpCastlingBoard() {
-                for (int row = 0; row < 8; row++) {
-                    for (int col = 0; col < 8; col++) {
-                        board.getSquares()[row][col] = null;
-                    }
-                }
-                
+                // Set up kings and rooks in initial positions for castling
                 board.getSquares()[7][4] = new Piece("king", "white", "♔");
                 board.getSquares()[7][0] = new Piece("rook", "white", "♖");
                 board.getSquares()[7][7] = new Piece("rook", "white", "♖");
