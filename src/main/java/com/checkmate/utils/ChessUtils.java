@@ -6,7 +6,15 @@ import com.checkmate.model.Piece;
 public class ChessUtils {
 
     /**
-     * Checks if a move is valid according to chess rules
+     * Checks if a move is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the piece to be moved
+     * @param fromCol The column of the piece to be moved
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @param currentPlayer The color of the player making the move ("white" or "black")
+     * @return true if the move is valid, false otherwise
      */
     public static boolean isValidMove(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
         // Check if coordinates are within bounds
@@ -65,7 +73,15 @@ public class ChessUtils {
     }
     
     /**
-     * Check if moving the piece would expose the king to check
+     * Checks if moving the piece would expose the king to check.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the piece to be moved
+     * @param fromCol The column of the piece to be moved
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @param playerColor The color of the player making the move
+     * @return true if the move would expose the king to check, false otherwise
      */
     private static boolean wouldMoveExposeKingToCheck(Board board, int fromRow, int fromCol, int toRow, int toCol, String playerColor) {
         // Create a temporary board to simulate the move
@@ -143,7 +159,14 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a piece can attack a specific square
+     * Checks if a piece can attack a specific square.
+     * 
+     * @param board The current chess board state
+     * @param pieceRow The row of the attacking piece
+     * @param pieceCol The column of the attacking piece
+     * @param targetRow The row of the target square
+     * @param targetCol The column of the target square
+     * @return true if the piece can attack the target square, false otherwise
      */
     private static boolean canPieceAttackSquare(Board board, int pieceRow, int pieceCol, int targetRow, int targetCol) {
         Piece piece = board.getSquares()[pieceRow][pieceCol];
@@ -195,7 +218,14 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a pawn move is valid
+     * Checks if a pawn move is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the pawn
+     * @param fromCol The column of the pawn
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @return true if the pawn move is valid, false otherwise
      */
     private static boolean isPawnMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Piece pawn = board.getSquares()[fromRow][fromCol];
@@ -231,7 +261,14 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a rook move is valid
+     * Checks if a rook move is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the rook
+     * @param fromCol The column of the rook
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @return true if the rook move is valid, false otherwise
      */
     private static boolean isRookMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         // Rooks move horizontally or vertically
@@ -243,7 +280,13 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a knight move is valid
+     * Checks if a knight move is valid according to chess rules.
+     * 
+     * @param fromRow The row of the knight
+     * @param fromCol The column of the knight
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @return true if the knight move is valid, false otherwise
      */
     private static boolean isKnightMoveValid(int fromRow, int fromCol, int toRow, int toCol) {
         // Knights move in an L-shape
@@ -252,7 +295,14 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a bishop move is valid
+     * Checks if a bishop move is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the bishop
+     * @param fromCol The column of the bishop
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @return true if the bishop move is valid, false otherwise
      */
     private static boolean isBishopMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         // Bishops move diagonally
@@ -264,7 +314,14 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a queen move is valid
+     * Checks if a queen move is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the queen
+     * @param fromCol The column of the queen
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @return true if the queen move is valid, false otherwise
      */
     private static boolean isQueenMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         // Queens move like bishops or rooks
@@ -279,7 +336,15 @@ public class ChessUtils {
     }
     
     /**
-     * Check if a king move is valid
+     * Checks if a king move is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the king
+     * @param fromCol The column of the king
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @param currentPlayer The color of the player making the move
+     * @return true if the king move is valid, false otherwise
      */
     private static boolean isKingMoveValid(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
         // Regular king move (one square in any direction)
@@ -296,7 +361,15 @@ public class ChessUtils {
     }
     
     /**
-     * Check if castling is valid
+     * Checks if castling is valid according to chess rules.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the king
+     * @param fromCol The column of the king
+     * @param toRow The destination row of the king
+     * @param toCol The destination column of the king
+     * @param currentPlayer The color of the player making the move
+     * @return true if castling is valid, false otherwise
      */
     private static boolean isValidCastling(Board board, int fromRow, int fromCol, int toRow, int toCol, String currentPlayer) {
         Piece king = board.getSquares()[fromRow][fromCol];
@@ -346,7 +419,14 @@ public class ChessUtils {
     }
     
     /**
-     * Simulate a move on a temporary board
+     * Simulates a move on a temporary board without modifying the original board.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The row of the piece to be moved
+     * @param fromCol The column of the piece to be moved
+     * @param toRow The destination row
+     * @param toCol The destination column
+     * @return A new board with the simulated move applied
      */
     private static Board simulateMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Board tempBoard = new Board();
@@ -375,7 +455,13 @@ public class ChessUtils {
     }
     
     /**
-     * Check if the king is in check
+     * Checks if the king is in check.
+     * 
+     * @param board The current chess board state
+     * @param kingRow The row of the king
+     * @param kingCol The column of the king
+     * @param kingColor The color of the king
+     * @return true if the king is in check, false otherwise
      */
     private static boolean isKingInCheck(Board board, int kingRow, int kingCol, String kingColor) {
         String opponentColor = kingColor.equals("white") ? "black" : "white";
@@ -396,7 +482,14 @@ public class ChessUtils {
     }
     
     /**
-     * Check if the path between two positions is clear
+     * Checks if the path between two positions is clear of any pieces.
+     * 
+     * @param board The current chess board state
+     * @param fromRow The starting row
+     * @param fromCol The starting column
+     * @param toRow The ending row
+     * @param toCol The ending column
+     * @return true if the path is clear, false if any piece is blocking the path
      */
     public static boolean isPathClear(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         // Get direction of movement
@@ -420,7 +513,14 @@ public class ChessUtils {
     }
     
     /**
-     * Apply a move to the board
+     * Applies a move to the board, updating the position of the pieces.
+     * Also handles special moves like castling.
+     * 
+     * @param board The chess board to modify
+     * @param fromRow The row of the piece to be moved
+     * @param fromCol The column of the piece to be moved
+     * @param toRow The destination row
+     * @param toCol The destination column
      */
     public static void applyMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
         Piece piece = board.getSquares()[fromRow][fromCol];
@@ -449,7 +549,14 @@ public class ChessUtils {
     }
     
     /**
-     * Castle the king with a rook
+     * Performs a castling move, moving both the king and rook.
+     * 
+     * @param board The chess board to modify
+     * @param kingRow The row of the king
+     * @param kingCol The column of the king
+     * @param rookRow The row of the rook
+     * @param rookCol The column of the rook
+     * @throws IllegalArgumentException If the pieces at the provided positions are not a king and a rook
      */
     public static void castleRookWithKing(Board board, int kingRow, int kingCol, int rookRow, int rookCol) {
         Piece king = board.getSquares()[kingRow][kingCol];
