@@ -9,28 +9,26 @@ import com.checkmate.repository.GameRepository;
 import java.util.List;
 import java.util.Optional;
 
+import com.checkmate.utils.ChessUtils;
+
 @Service
 public class GameService {
     @Autowired
     private final GameRepository gameRepository;
-    public GameService(GameRepository gameRepository) {
+    @Autowired
+    private final MoveRepository moveRepository;
+
+    public GameService(GameRepository gameRepository, moveRepository moveRepository) {
+        this.moveRepository = moveRepository;
         this.gameRepository = gameRepository;
     }
    
-    /**
-     * Method to get all games.
-     * @param game - the game to save.
-     * @return A created game
-     */
     public Game saveGame(Game game) {
         return gameRepository.saveAndFlush(game);
     }
-    /**
-     * Method to get all games.
-     * @param game - the game to save.
-     * @return A game
-     */
     public Optional<Game> getGameById(int id) {
         return gameRepository.findById(id);
+    }
+    public boolean makeMove(Long gameId, int fromRow, int fromCol, int toRow, int toCol) {
     }
 }
