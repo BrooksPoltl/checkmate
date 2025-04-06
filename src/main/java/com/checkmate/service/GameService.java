@@ -51,7 +51,7 @@ public class GameService {
         Game game = gameOpt.get();
         Board board = game.getBoard();
         
-        // Validate the move using ChessUtils or your game logic
+        // Validate the move using ChessUtils
         if (ChessUtils.isValidMove(board, fromRow, fromCol, toRow, toCol)) {
             // Update the board state
             board = ChessUtils.makeMove(board, fromRow, fromCol, toRow, toCol);

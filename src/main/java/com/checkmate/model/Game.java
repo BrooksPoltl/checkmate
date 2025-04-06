@@ -6,6 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
 import java.util.List;
 import java.time.LocalDateTime;
 
@@ -26,6 +29,9 @@ public class Game {
 
     @OneToMany(mappedBy = "game")
     private List<Move> moves;
+    
+    @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Board board;
 
     @Column(name = "status")
     private String status; // "ACTIVE", "FINISHED"
@@ -40,11 +46,25 @@ public class Game {
     private LocalDateTime updatedAt;
 
     // Constructors
-    public Game() {}
+    public Game() {
+        this.status = "ACTIVE";
+        this.currentPlayer = "white";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public Game(String whitePlayerId, String blackPlayerId) {
         this.whitePlayerId = whitePlayerId;
         this.blackPlayerId = blackPlayerId;
+        this.status = "ACTIVE";
+        this.currentPlayer = "white";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // Add constructor that takes an integer player ID
+    public Game(Integer playerId) {
+        this.whitePlayerId = playerId.toString();
         this.status = "ACTIVE";
         this.currentPlayer = "white";
         this.createdAt = LocalDateTime.now();
@@ -70,4 +90,8 @@ public class Game {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    // Add board getter and setter
+    public Board getBoard() { return board; }
+    public void setBoard(Board board) { this.board = board; }
 }

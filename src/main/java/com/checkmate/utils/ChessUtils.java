@@ -73,6 +73,45 @@ public class ChessUtils {
     }
     
     /**
+     * Validates if a move is legal according to chess rules
+     * 
+     * @param board the current board state
+     * @param fromRow starting row (0-7)
+     * @param fromCol starting column (0-7)
+     * @param toRow destination row (0-7)
+     * @param toCol destination column (0-7)
+     * @return true if the move is valid, false otherwise
+     */
+    public static boolean isValidMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
+        // Get the current player's color from the board
+        String currentPlayer = board.getCurrentTurn().toLowerCase();
+        return isValidMove(board, fromRow, fromCol, toRow, toCol, currentPlayer);
+    }
+    
+    /**
+     * Makes a move on the board and returns the updated board
+     * 
+     * @param board the current board state
+     * @param fromRow starting row (0-7)
+     * @param fromCol starting column (0-7)
+     * @param toRow destination row (0-7)
+     * @param toCol destination column (0-7)
+     * @return the updated board after the move
+     */
+    public static Board makeMove(Board board, int fromRow, int fromCol, int toRow, int toCol) {
+        // Apply the move to the board
+        applyMove(board, fromRow, fromCol, toRow, toCol);
+        
+        // Toggle the current player's turn
+        board.toggleTurn();
+        
+        // Update the board state from the pieces array
+        board.updateBoardState();
+        
+        return board;
+    }
+    
+    /**
      * Checks if moving the piece would expose the king to check.
      * 
      * @param board The current chess board state
