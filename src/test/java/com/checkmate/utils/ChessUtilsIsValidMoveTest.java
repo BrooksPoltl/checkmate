@@ -1265,22 +1265,21 @@ class ChessUtilsIsValidMoveTest {
         @Test
         @DisplayName("Cannot make any move if in checkmate")
         void testCannotMoveIfInCheckmate() {
-            // Set up a proper checkmate position where pawns can't block
-            board.getSquares()[7][4] = new Piece("king", "white", "♔");   // White king at e1
-            board.getSquares()[6][3] = new Piece("pawn", "white", "♙");   // White pawn at d2 (can't block)
-            board.getSquares()[6][5] = new Piece("pawn", "white", "♙");   // White pawn at f2 (can't block)
-            board.getSquares()[7][3] = new Piece("rook", "black", "♜");   // Black rook at d1 blocking left
-            board.getSquares()[7][5] = new Piece("rook", "black", "♜");   // Black rook at f1 blocking right
-            board.getSquares()[6][4] = new Piece("queen", "black", "♛");  // Black queen at e2 delivering check
-            
-            // King has no legal moves
-            assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 3, "white"));  // Cannot move to d1 (blocked by rook)
-            assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 5, "white"));  // Cannot move to f1 (blocked by rook)
-            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 4, "white"));  // Cannot move to e2 (occupied by queen)
-            
-            // Cannot move pawns either as they don't block the check
-            assertFalse(ChessUtils.isValidMove(board, 6, 3, 5, 3, "white"));  // Cannot move d-pawn
-            assertFalse(ChessUtils.isValidMove(board, 6, 5, 5, 5, "white"));  // Cannot move f-pawn
+            board.getSquares()[7][4] = new Piece("king", "white", "♔");
+            board.getSquares()[6][3] = new Piece("pawn", "white", "♙"); // d2
+            board.getSquares()[6][5] = new Piece("pawn", "white", "♙"); // f2
+            board.getSquares()[6][4] = new Piece("queen", "black", "♛"); // e2
+            board.getSquares()[5][4] = new Piece("rook", "black", "♜");  // e3
+            board.getSquares()[7][3] = new Piece("rook", "black", "♜");  // d1
+            board.getSquares()[7][5] = new Piece("rook", "black", "♜");  // f1
+
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 3, "white")); // d1: Occupied by black rook
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 7, 5, "white")); // f1: Occupied by black rook
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 3, "white")); // d2: Occupied by own pawn
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 4, "white")); // e2: Black queen (protected by rook)
+            assertFalse(ChessUtils.isValidMove(board, 7, 4, 6, 5, "white")); // f2: Occupied by own pawn
+            assertFalse(ChessUtils.isValidMove(board, 6, 3, 5, 4, "white")); // Pawn d2 can't capture at e3
+            assertFalse(ChessUtils.isValidMove(board, 6, 5, 5, 4, "white")); // Pawn f2 can't capture at e3
         }
         
         @Test
