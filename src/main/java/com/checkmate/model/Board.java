@@ -1,46 +1,77 @@
 package com.checkmate.model;
 
-import com.checkmate.model.Piece;
+import jakarta.persistence.*;
+import java.io.Serializable;
 
-public class Board {
-    private Piece[][] squares;
-
+@Entity
+@Table(name = "boards")
+public class Board implements Serializable {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    
+    @OneToOne
+    @JoinColumn(name = "game_id")
+    private Game game;
+    
+    @Column(name = "board_state", columnDefinition = "TEXT")
+    private String boardState;
+    
+    @Column(name = "current_turn")
+    private String currentTurn = "WHITE"; // Default to WHITE starting
+    
+    // Default constructor required by JPA
     public Board() {
-        squares = new Piece[8][8];
-        initializeBoard();
+        initializeDefaultBoard();
     }
-
-    private void initializeBoard() {
-        squares[0][0] = new Piece("rook", "black", "♜");
-        squares[0][1] = new Piece("knight", "black", "♞");
-        squares[0][2] = new Piece("bishop", "black", "♝");
-        squares[0][3] = new Piece("queen", "black", "♛");
-        squares[0][4] = new Piece("king", "black", "♚");
-        squares[0][5] = new Piece("bishop", "black", "♝");
-        squares[0][6] = new Piece("knight", "black", "♞");
-        squares[0][7] = new Piece("rook", "black", "♜");
-        for (int col = 0; col < 8; col++) {
-            squares[1][col] = new Piece("pawn", "black", "♟");
-        }
-        for (int row = 2; row < 6; row++) {
-            for (int col = 0; col < 8; col++) {
-                squares[row][col] = null;
-            }
-        }
-        for (int col = 0; col < 8; col++) {
-            squares[6][col] = new Piece("pawn", "white", "♙");
-        }
-        squares[7][0] = new Piece("rook", "white", "♖");
-        squares[7][1] = new Piece("knight", "white", "♘");
-        squares[7][2] = new Piece("bishop", "white", "♗");
-        squares[7][3] = new Piece("queen", "white", "♕");
-        squares[7][4] = new Piece("king", "white", "♔");
-        squares[7][5] = new Piece("bishop", "white", "♗");
-        squares[7][6] = new Piece("knight", "white", "♘");
-        squares[7][7] = new Piece("rook", "white", "♖");
+    
+    public Board(Game game) {
+        this.game = game;
+        initializeDefaultBoard();
     }
-
-    public Piece[][] getSquares() {
-        return squares;
+    
+    private void initializeDefaultBoard() {
+        // Initialize with the standard chess starting position
+        // This could be a FEN string representation or your own format
+        this.boardState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    }
+    
+    // Getters and setters
+    public Integer getId() {
+        return id;
+    }
+    
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
+    public Game getGame() {
+        return game;
+    }
+    
+    public void setGame(Game game) {
+        this.game = game;
+    }
+    
+    public String getBoardState() {
+        return boardState;
+    }
+    
+    public void setBoardState(String boardState) {
+        this.boardState = boardState;
+    }
+    
+    public String getCurrentTurn() {
+        return currentTurn;
+    }
+    
+    public void setCurrentTurn(String currentTurn) {
+        this.currentTurn = currentTurn;
+    }
+    
+    // Method to toggle turn
+    public void toggleTurn() {
+        this.currentTurn = this.currentTurn.equals("WHITE") ? "BLACK" : "WHITE";
     }
 }

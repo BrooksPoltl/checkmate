@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.OneToMany;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 public class Game {
@@ -14,36 +15,59 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id")
-    private int userId;
+    @Column(name = "white_player_id")
+    private String whitePlayerId;
 
-    @Column(name = "status")
-    private String status; // e.g., "active", "completed", "resigned"
+    @Column(name = "black_player_id")
+    private String blackPlayerId;
 
     @Column(name = "current_player")
-    private String currentPlayer;
+    private String currentPlayer; // "white" or "black"
 
     @OneToMany(mappedBy = "game")
     private List<Move> moves;
 
+    @Column(name = "status")
+    private String status; // "ACTIVE", "FINISHED"
+
+    @Column(name = "winner")
+    private String winner; // null, "white", "black", "draw"
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     // Constructors
     public Game() {}
 
-    public Game(int userId) {
-        this.userId = userId;
-        this.status = "active";
+    public Game(String whitePlayerId, String blackPlayerId) {
+        this.whitePlayerId = whitePlayerId;
+        this.blackPlayerId = blackPlayerId;
+        this.status = "ACTIVE";
         this.currentPlayer = "white";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public int getUserId() { return userId; }
-    public void setUserId(int userId) { this.userId = userId; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getWhitePlayerId() { return whitePlayerId; }
+    public void setWhitePlayerId(String whitePlayerId) { this.whitePlayerId = whitePlayerId; }
+    public String getBlackPlayerId() { return blackPlayerId; }
+    public void setBlackPlayerId(String blackPlayerId) { this.blackPlayerId = blackPlayerId; }
     public String getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(String currentPlayer) { this.currentPlayer = currentPlayer; }
     public List<Move> getMoves() { return moves; }
     public void setMoves(List<Move> moves) { this.moves = moves; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getWinner() { return winner; }
+    public void setWinner(String winner) { this.winner = winner; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
