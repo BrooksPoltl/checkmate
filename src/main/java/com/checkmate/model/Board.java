@@ -1,6 +1,15 @@
 package com.checkmate.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Transient;
+
 import java.io.Serializable;
 
 @Entity
@@ -21,6 +30,7 @@ public class Board implements Serializable {
     @Column(name = "current_turn")
     private String currentTurn = "WHITE"; // Default to WHITE starting
     
+    @Transient
     private Piece[][] squares;
     
     // Default constructor required by JPA
